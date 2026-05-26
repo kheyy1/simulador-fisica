@@ -1,11 +1,149 @@
-<!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=https://www.figma.com/site/Whj7hvJLzw1c7JFQQy4Pns/Sin-t%C3%ADtulo?node-id=0-1&t=tkt8u5v85DhNuBEZ-1">
-    <title>Cargando Simulador...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Experimentos Físicos</title>
+    <style>
+        /* Estilos generales con estética moderna y oscura */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        header {
+            text-align: center;
+            margin: 40px 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: #38bdf8;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        /* Contenedor de las tarjetas de experimentos */
+        .grid-experimentos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            width: 90%;
+            padding: 20px 0;
+        }
+
+        /* Estilo de cada tarjeta */
+        .card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #38bdf8;
+            box-shadow: 0 10px 20px rgba(56, 189, 248, 0.1);
+        }
+
+        .card h2 {
+            font-size: 1.4rem;
+            color: #e2e8f0;
+            margin-top: 0;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        /* Botón de ingreso */
+        .btn-entrar {
+            display: inline-block;
+            background-color: #0284c7;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-entrar:hover {
+            background-color: #0369a1;
+        }
+
+        footer {
+            margin-top: auto;
+            padding: 30px;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+    </style>
 </head>
 <body>
-    <p>Redirigiendo al simulador en Figma...</p>
-</body>
-</html>
+
+    <header>
+        <h1>Simulador de Experimentos Físicos</h1>
+        <p>Selecciona un módulo para iniciar la simulación interactiva</p>
+    </header>
+
+    <main class="grid-experimentos">
+        
+        <div class="card">
+            <div>
+                <h2>Gas Ideal</h2>
+                <p>Explora el comportamiento de las partículas, presión, volumen y temperatura en un sistema cerrado.</p>
+            </div>
+            <a href="gas-idel.html" class="btn-entrar">Iniciar Simulación</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Ley de Faraday</h2>
+                <p>Visualiza la inducción electromagnética moviendo un imán a través de bobinas para generar energía.</p>
+            </div>
+            <a href="ley-de-faraday.html" class="btn-entrar">Iniciar Simulación</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Colisiones</h2>
+                <p>Analiza el choque elástico e inelástico entre cuerpos móviles y la conservación del momento lineal.</p>
+            </div>
+            <a href="colisiones.html" class="btn-entrar">Iniciar Simulación</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Plano Inclinado</h2>
+                <p>Estudia las fuerzas en juego, la aceleración y los coeficientes de fricción estática y cinética.</p>
+            </div>
+            <a href="plano-inclinado.html" class="btn-entrar">Iniciar Simulación</a>
+        </div>
+
+        <div class="card">
+            <div>
+                <h2>Campo Eléctrico</h2>
+                <p>Interactúa con cargas positivas y negativas para mapear las líneas de campo y superficies equipotenciales.</p>
+            </div>

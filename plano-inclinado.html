@@ -1,0 +1,466 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+.vr{background:#05080f;border-radius:16px;min-height:680px;display:flex;flex-direction:column;font-family:'Exo 2',sans-serif;position:relative;overflow:hidden;}
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
+.glow-top{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:400px;height:260px;background:radial-gradient(ellipse,rgba(0,180,255,0.07) 0%,transparent 70%);pointer-events:none;}
+.scan{position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,rgba(0,220,255,0.45),transparent);animation:scan 5s linear infinite;}
+@keyframes scan{0%{top:0;opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+.corner{position:absolute;width:18px;height:18px;border-color:rgba(0,200,255,0.4);border-style:solid;}
+.corner.tl{top:14px;left:14px;border-width:2px 0 0 2px;}.corner.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}.corner.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 22px 14px;border-bottom:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
+.back-btn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.18);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.7);font-size:18px;transition:all 0.2s;flex-shrink:0;}
+.back-btn:hover{background:rgba(0,200,255,0.13);border-color:rgba(0,200,255,0.45);}
+.top-info{flex:1;}
+.top-info h2{font-size:15px;font-weight:700;color:#e8f8ff;letter-spacing:0.06em;margin-bottom:2px;}
+.top-info p{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.38);letter-spacing:0.1em;}
+.rec-pill{display:flex;align-items:center;gap:6px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,80,80,0.25);border-radius:20px;padding:5px 13px;}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,80,80,0.9);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.rec-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,130,130,0.8);letter-spacing:0.1em;}
+.timer{font-family:'Share Tech Mono',monospace;font-size:14px;color:rgba(0,200,255,0.7);letter-spacing:0.1em;min-width:54px;text-align:right;}
+
+.main{display:flex;flex:1;min-height:0;}
+.sim-area{flex:1;position:relative;background:#050a12;border-right:1px solid rgba(0,200,255,0.07);overflow:hidden;}
+.sim-lbl{position:absolute;top:12px;left:14px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.28);letter-spacing:0.1em;z-index:2;pointer-events:none;}
+.hud{position:absolute;bottom:12px;right:14px;z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none;}
+.hud-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,200,255,0.42);letter-spacing:0.06em;}
+.hud-val span{color:rgba(0,220,255,0.8);}
+canvas{width:100%;height:100%;display:block;}
+
+.side{width:220px;display:flex;flex-direction:column;flex-shrink:0;}
+.panel{padding:14px 16px 12px;border-bottom:1px solid rgba(0,200,255,0.07);}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.13em;margin-bottom:12px;}
+.srow{margin-bottom:13px;}.srow:last-child{margin-bottom:0;}
+.stop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.sname{font-size:12px;font-weight:600;color:#c0ddf0;}
+.sval{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,210,255,0.75);}
+.sdesc{font-size:10px;color:rgba(140,200,220,0.38);margin-bottom:6px;font-weight:300;}
+input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,255,0.75);}
+
+.toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.toggle-row:last-child{margin-bottom:0;}
+.tname{font-size:11px;font-weight:600;color:rgba(180,220,240,0.7);}
+.tog{position:relative;width:36px;height:20px;flex-shrink:0;}
+.tog input{opacity:0;width:0;height:0;position:absolute;}
+.tog-track{position:absolute;inset:0;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.2);border-radius:10px;cursor:pointer;transition:all 0.25s;}
+.tog input:checked+.tog-track{background:rgba(0,200,255,0.22);border-color:rgba(0,200,255,0.55);}
+.tog-thumb{position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:rgba(0,200,255,0.35);transition:all 0.25s;pointer-events:none;}
+.tog input:checked~.tog-thumb{left:19px;background:rgba(0,220,255,0.9);}
+
+.meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.mcard{background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.1);border-radius:8px;padding:9px 11px;}
+.mlbl{font-size:9px;color:rgba(150,200,220,0.42);letter-spacing:0.04em;margin-bottom:3px;}
+.mnum{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:600;color:#a0dff5;}
+.munit{font-size:9px;color:rgba(0,200,255,0.35);margin-left:2px;}
+
+.forces-list{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+.frow{display:flex;align-items:center;gap:8px;}
+.fdot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+.fname{font-size:10px;color:rgba(160,210,230,0.55);flex:1;}
+.fval{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,210,255,0.7);}
+
+.controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 16px;border-top:1px solid rgba(0,200,255,0.07);}
+.cbtn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.15);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.65);font-size:18px;transition:all 0.18s;}
+.cbtn:hover{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.4);color:#c0eeff;}
+.cbtn.main{width:46px;height:46px;font-size:20px;border-color:rgba(0,200,255,0.35);}
+.cbtn.lit{background:rgba(0,200,255,0.16);border-color:rgba(0,200,255,0.55);color:#c0eeff;}
+
+.statusbar{display:flex;align-items:center;gap:8px;padding:9px 22px;border-top:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
+.sdot{width:6px;height:6px;border-radius:50%;background:rgba(0,210,120,0.8);}
+.stxt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.09em;flex:1;}
+.prog-wrap{width:100px;height:3px;background:rgba(0,200,255,0.1);border-radius:2px;overflow:hidden;}
+.prog{height:100%;width:0%;background:rgba(0,200,255,0.55);border-radius:2px;transition:width 0.5s;}
+</style>
+
+<div class="vr">
+  <div class="grid-bg"></div><div class="glow-top"></div><div class="scan"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+
+  <div class="topbar">
+    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><i class="ti ti-arrow-left"></i></button>
+    <div class="top-info">
+      <h2>Plano inclinado — Dinámica</h2>
+      <p>SIMULACIÓN ACTIVA · MECÁNICA · BÁSICO</p>
+    </div>
+    <div class="rec-pill"><div class="rec-dot"></div><span class="rec-txt">REC</span></div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+
+  <div class="main">
+    <div class="sim-area" id="simArea">
+      <div class="sim-lbl">VISTA DE SIMULACIÓN · ESCALA 1:1 m</div>
+      <div class="hud">
+        <div class="hud-val">θ = <span id="hudTheta">30.0</span>°</div>
+        <div class="hud-val">a = <span id="hudA">—</span> m/s²</div>
+        <div class="hud-val">v = <span id="hudV">0.00</span> m/s</div>
+      </div>
+      <canvas id="c"></canvas>
+    </div>
+
+    <div class="side">
+      <!-- PARÁMETROS -->
+      <div class="panel">
+        <div class="panel-title">PARÁMETROS</div>
+        <div class="srow">
+          <div class="stop"><span class="sname">Ángulo θ</span><span class="sval" id="angleVal">30°</span></div>
+          <input type="range" min="5" max="75" value="30" id="angleSlider">
+        </div>
+        <div class="srow">
+          <div class="stop"><span class="sname">Masa m</span><span class="sval" id="massVal">5.0 kg</span></div>
+          <input type="range" min="1" max="20" value="5" id="massSlider">
+        </div>
+        <div class="srow">
+          <div class="stop"><span class="sname">Fricción μ</span><span class="sval" id="muVal">0.20</span></div>
+          <input type="range" min="0" max="80" value="20" id="muSlider">
+        </div>
+      </div>
+
+      <!-- OPCIONES -->
+      <div class="panel">
+        <div class="panel-title">OPCIONES</div>
+        <div class="toggle-row">
+          <span class="tname">Vectores de fuerza</span>
+          <label class="tog"><input type="checkbox" id="togVec" checked><div class="tog-track"></div><div class="tog-thumb"></div></label>
+        </div>
+        <div class="toggle-row">
+          <span class="tname">Trayectoria</span>
+          <label class="tog"><input type="checkbox" id="togTrail" checked><div class="tog-track"></div><div class="tog-thumb"></div></label>
+        </div>
+        <div class="toggle-row">
+          <span class="tname">Descomposición g</span>
+          <label class="tog"><input type="checkbox" id="togDecomp" checked><div class="tog-track"></div><div class="tog-thumb"></div></label>
+        </div>
+      </div>
+
+      <!-- MEDICIONES -->
+      <div class="panel" style="flex:1;">
+        <div class="panel-title">MEDICIONES</div>
+        <div class="meas-grid">
+          <div class="mcard"><div class="mlbl">ACELERACIÓN</div><div><span class="mnum" id="mA">—</span><span class="munit">m/s²</span></div></div>
+          <div class="mcard"><div class="mlbl">VELOCIDAD</div><div><span class="mnum" id="mV">0.00</span><span class="munit">m/s</span></div></div>
+          <div class="mcard"><div class="mlbl">DISTANCIA</div><div><span class="mnum" id="mD">0.00</span><span class="munit">m</span></div></div>
+          <div class="mcard"><div class="mlbl">TIEMPO</div><div><span class="mnum" id="mT">0.00</span><span class="munit">s</span></div></div>
+        </div>
+        <div class="forces-list">
+          <div class="frow"><div class="fdot" style="background:rgba(255,220,80,0.8);"></div><span class="fname">Peso (W)</span><span class="fval" id="fW">—</span></div>
+          <div class="frow"><div class="fdot" style="background:rgba(0,200,255,0.8);"></div><span class="fname">Normal (N)</span><span class="fval" id="fN">—</span></div>
+          <div class="frow"><div class="fdot" style="background:rgba(255,100,100,0.8);"></div><span class="fname">Fricción (f)</span><span class="fval" id="fF">—</span></div>
+          <div class="frow"><div class="fdot" style="background:rgba(100,255,160,0.8);"></div><span class="fname">Neta (Fnet)</span><span class="fval" id="fNet">—</span></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="cbtn" title="Reiniciar" onclick="resetSim()"><i class="ti ti-refresh"></i></button>
+        <button class="cbtn main lit" id="playBtn" onclick="togglePlay()"><i class="ti ti-player-pause"></i></button>
+        <button class="cbtn" title="Captura" onclick="snap(this)"><i class="ti ti-camera"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="sdot"></div>
+    <div class="stxt" id="stxt">SIMULACIÓN EN CURSO · FÍSICA CALCULADA EN TIEMPO REAL</div>
+    <div class="prog-wrap"><div class="prog" id="prog"></div></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const simArea = document.getElementById('simArea');
+const g = 9.8;
+
+let running = true, timerSec = 0, simTime = 0;
+let blockPos = 0; // position along incline (meters)
+let blockVel = 0;
+let trail = [];
+let lastTs = null;
+
+function W(){ return canvas.width; }
+function H(){ return canvas.height; }
+
+function getAngle(){ return parseInt(document.getElementById('angleSlider').value); }
+function getMass(){ return parseInt(document.getElementById('massSlider').value); }
+function getMu(){ return parseInt(document.getElementById('muSlider').value)/100; }
+function showVec(){ return document.getElementById('togVec').checked; }
+function showTrail(){ return document.getElementById('togTrail').checked; }
+function showDecomp(){ return document.getElementById('togDecomp').checked; }
+
+function getPhysics(){
+  const theta = getAngle() * Math.PI/180;
+  const m = getMass(), mu = getMu();
+  const W = m * g;
+  const N = W * Math.cos(theta);
+  const Wpar = W * Math.sin(theta);
+  const fric = mu * N;
+  const Fnet = Wpar - fric;
+  const a = Fnet / m;
+  return {theta, m, W, N, Wpar, fric, Fnet, a};
+}
+
+function resize(){
+  const r = simArea.getBoundingClientRect();
+  canvas.width = Math.max(r.width, 10);
+  canvas.height = Math.max(r.height, 10);
+  trail = [];
+  blockPos = 0; blockVel = 0; simTime = 0;
+}
+resize();
+
+// Sliders
+document.getElementById('angleSlider').addEventListener('input', function(){
+  document.getElementById('angleVal').textContent = this.value + '°';
+  document.getElementById('hudTheta').textContent = parseFloat(this.value).toFixed(1);
+  trail = []; blockPos = 0; blockVel = 0; simTime = 0;
+});
+document.getElementById('massSlider').addEventListener('input', function(){
+  document.getElementById('massVal').textContent = parseFloat(this.value).toFixed(1) + ' kg';
+});
+document.getElementById('muSlider').addEventListener('input', function(){
+  document.getElementById('muVal').textContent = (this.value/100).toFixed(2);
+});
+
+function draw(ts){
+  if(!lastTs) lastTs = ts;
+  const dt = Math.min((ts - lastTs)/1000, 0.05);
+  lastTs = ts;
+
+  const ph = getPhysics();
+
+  if(running){
+    simTime += dt;
+    // Only move if net force pushes down
+    if(ph.a > 0 || blockVel > 0){
+      blockVel += ph.a * dt;
+      if(blockVel < 0) blockVel = 0;
+      blockPos += blockVel * dt;
+    }
+  }
+
+  // incline geometry
+  const margin = 60;
+  const inclineLen = Math.min(W(), H()) * 0.75;
+  const baseX = margin + 20;
+  const baseY = H() - margin;
+  const theta = ph.theta;
+  const topX = baseX + inclineLen * Math.cos(theta);
+  const topY = baseY - inclineLen * Math.sin(theta);
+
+  // pixels per meter
+  const ppm = inclineLen / 6;
+
+  // block position in pixels along incline (from top)
+  const maxDist = 5.5; // meters
+  const normPos = Math.min(blockPos, maxDist) / maxDist;
+  const bpx = topX - normPos * (topX - baseX);
+  const bpy = topY + normPos * (baseY - topY);
+  const bSize = 28;
+
+  // trail
+  if(running && showTrail() && ph.a > 0){
+    trail.push({x: bpx, y: bpy});
+    if(trail.length > 120) trail.shift();
+  }
+
+  // DRAW
+  ctx.clearRect(0,0,W(),H());
+  ctx.fillStyle = '#050a12';
+  ctx.fillRect(0,0,W(),H());
+
+  // grid
+  ctx.strokeStyle = 'rgba(0,200,255,0.04)';
+  ctx.lineWidth = 0.5;
+  for(let x=0;x<W();x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H());ctx.stroke();}
+  for(let y=0;y<H();y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W(),y);ctx.stroke();}
+
+  // Ground
+  ctx.strokeStyle = 'rgba(0,200,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6,8]);
+  ctx.beginPath(); ctx.moveTo(margin, baseY); ctx.lineTo(W()-margin, baseY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Incline surface fill
+  ctx.beginPath();
+  ctx.moveTo(baseX, baseY);
+  ctx.lineTo(topX, topY);
+  ctx.lineTo(topX, baseY);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0,200,255,0.04)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0,200,255,0.25)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Incline surface line
+  ctx.beginPath();
+  ctx.moveTo(baseX, baseY);
+  ctx.lineTo(topX, topY);
+  ctx.strokeStyle = 'rgba(0,200,255,0.55)';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Angle arc
+  ctx.beginPath();
+  ctx.arc(baseX, baseY, 36, -theta, 0);
+  ctx.strokeStyle = 'rgba(0,200,255,0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(0,200,255,0.5)';
+  ctx.font = '11px Share Tech Mono';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(getAngle()+'°', baseX+42, baseY-12);
+
+  // Trail
+  if(showTrail() && trail.length > 1){
+    ctx.beginPath();
+    ctx.moveTo(trail[0].x, trail[0].y);
+    for(let i=1;i<trail.length;i++) ctx.lineTo(trail[i].x, trail[i].y);
+    ctx.strokeStyle = 'rgba(0,200,255,0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3,4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Tick marks on incline
+  const tickCount = 6;
+  for(let i=0;i<=tickCount;i++){
+    const t = i/tickCount;
+    const tx = topX - t*(topX-baseX);
+    const ty = topY + t*(baseY-topY);
+    const nx = -Math.sin(theta)*6, ny = -Math.cos(theta)*6;
+    ctx.beginPath();
+    ctx.moveTo(tx+nx, ty+ny); ctx.lineTo(tx-nx, ty-ny);
+    ctx.strokeStyle = 'rgba(0,200,255,0.18)';
+    ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(0,200,255,0.3)';
+    ctx.font = '8px Share Tech Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText((i*(6/tickCount)).toFixed(0)+'m', tx+nx*2.5, ty+ny*2.5);
+  }
+
+  // Block shadow
+  ctx.beginPath();
+  ctx.ellipse(bpx + Math.cos(theta)*4, bpy + Math.sin(theta)*4, bSize*0.6, bSize*0.2, theta, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fill();
+
+  // Block
+  ctx.save();
+  ctx.translate(bpx, bpy);
+  ctx.rotate(-theta);
+  ctx.fillStyle = 'rgba(0,200,255,0.12)';
+  ctx.strokeStyle = 'rgba(0,200,255,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(-bSize/2, -bSize/2, bSize, bSize, 4);
+  ctx.fill(); ctx.stroke();
+  // block label
+  ctx.fillStyle = 'rgba(0,220,255,0.85)';
+  ctx.font = 'bold 10px Share Tech Mono';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(getMass()+'kg', 0, 0);
+  ctx.restore();
+
+  // FORCE VECTORS
+  if(showVec()){
+    const scale = 0.018;
+    const dirX = Math.cos(theta), dirY = -Math.sin(theta); // along incline downward
+    const normDirX = Math.sin(theta), normDirY = Math.cos(theta); // perpendicular to incline
+
+    function arrow(ox, oy, vx, vy, col, lbl){
+      const len = Math.sqrt(vx*vx+vy*vy);
+      if(len < 2) return;
+      ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+vx,oy+vy); ctx.stroke();
+      // arrowhead
+      const nx2 = vx/len, ny2 = vy/len;
+      ctx.beginPath();
+      ctx.moveTo(ox+vx, oy+vy);
+      ctx.lineTo(ox+vx - nx2*10 + ny2*5, oy+vy - ny2*10 - nx2*5);
+      ctx.lineTo(ox+vx - nx2*10 - ny2*5, oy+vy - ny2*10 + nx2*5);
+      ctx.closePath(); ctx.fill();
+      ctx.font = '10px Share Tech Mono';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(lbl, ox+vx+nx2*16, oy+vy+ny2*16);
+    }
+
+    // Weight — straight down
+    arrow(bpx, bpy, 0, ph.W*scale*ppm*0.07, 'rgba(255,220,80,0.9)', 'W');
+
+    // Normal — perpendicular to incline surface (upward from surface)
+    arrow(bpx, bpy, -normDirX*ph.N*scale*ppm*0.07, -normDirY*ph.N*scale*ppm*0.07, 'rgba(0,200,255,0.9)', 'N');
+
+    // Friction — opposing motion (up the incline)
+    if(ph.fric > 0.01)
+      arrow(bpx, bpy, -dirX*ph.fric*scale*ppm*0.07, -dirY*ph.fric*scale*ppm*0.07, 'rgba(255,100,100,0.9)', 'f');
+
+    // Decomposition of g
+    if(showDecomp()){
+      arrow(bpx, bpy, dirX*ph.Wpar*scale*ppm*0.07, dirY*ph.Wpar*scale*ppm*0.07, 'rgba(255,160,60,0.6)', 'W∥');
+      arrow(bpx, bpy, -normDirX*ph.N*scale*ppm*0.06, -normDirY*ph.N*scale*ppm*0.06, 'rgba(100,220,255,0.45)', 'W⊥');
+    }
+  }
+
+  // update HUD & measurements
+  const aDisplay = ph.a > 0 ? ph.a.toFixed(2) : '0.00';
+  document.getElementById('hudA').textContent = aDisplay;
+  document.getElementById('hudV').textContent = blockVel.toFixed(2);
+  document.getElementById('mA').textContent = aDisplay;
+  document.getElementById('mV').textContent = blockVel.toFixed(2);
+  document.getElementById('mD').textContent = Math.min(blockPos, maxDist).toFixed(2);
+  document.getElementById('mT').textContent = simTime.toFixed(2);
+  document.getElementById('fW').textContent = ph.W.toFixed(1)+' N';
+  document.getElementById('fN').textContent = ph.N.toFixed(1)+' N';
+  document.getElementById('fF').textContent = ph.fric.toFixed(1)+' N';
+  document.getElementById('fNet').textContent = (ph.Fnet>0?'+':'')+ph.Fnet.toFixed(1)+' N';
+
+  if(blockPos >= maxDist && running){
+    document.getElementById('stxt').textContent = 'BLOQUE AL FINAL DEL PLANO · REINICIA PARA REPETIR';
+  }
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+// Wall timer
+setInterval(()=>{
+  if(!running) return;
+  timerSec++;
+  const m=String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s=String(timerSec%60).padStart(2,'0');
+  document.getElementById('timer').textContent=m+':'+s;
+  const p=Math.min(100,timerSec/15*100);
+  document.getElementById('prog').style.width=p+'%';
+  if(p>=100) document.getElementById('stxt').textContent='DATOS SUFICIENTES · EXPERIMENTO COMPLETADO';
+},1000);
+
+function togglePlay(){
+  running=!running;
+  const btn=document.getElementById('playBtn');
+  btn.innerHTML=running?'<i class="ti ti-player-pause"></i>':'<i class="ti ti-player-play"></i>';
+  running?btn.classList.add('lit'):btn.classList.remove('lit');
+  document.getElementById('stxt').textContent=running?'SIMULACIÓN EN CURSO · FÍSICA CALCULADA EN TIEMPO REAL':'SIMULACIÓN EN PAUSA';
+  if(running) lastTs = null;
+}
+function resetSim(){
+  blockPos=0; blockVel=0; simTime=0; trail=[];
+  timerSec=0; lastTs=null;
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('prog').style.width='0%';
+  document.getElementById('stxt').textContent='SIMULACIÓN EN CURSO · FÍSICA CALCULADA EN TIEMPO REAL';
+  if(!running){ running=true; document.getElementById('playBtn').innerHTML='<i class="ti ti-player-pause"></i>'; document.getElementById('playBtn').classList.add('lit'); }
+}
+function snap(btn){
+  btn.classList.add('lit');
+  document.getElementById('stxt').textContent='CAPTURA GUARDADA · t='+simTime.toFixed(2)+'s';
+  setTimeout(()=>btn.classList.remove('lit'),600);
+}
+window.addEventListener('resize',()=>{ resize(); lastTs=null; });
+</script>

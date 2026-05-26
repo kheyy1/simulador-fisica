@@ -1,0 +1,412 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+
+.vr{background:#05080f;border-radius:16px;min-height:680px;display:flex;flex-direction:column;font-family:'Exo 2',sans-serif;position:relative;overflow:hidden;}
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
+.glow-top{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:400px;height:260px;background:radial-gradient(ellipse,rgba(0,180,255,0.07) 0%,transparent 70%);pointer-events:none;}
+.scan{position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,rgba(0,220,255,0.45),transparent);animation:scan 5s linear infinite;}
+@keyframes scan{0%{top:0;opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+.corner{position:absolute;width:18px;height:18px;border-color:rgba(0,200,255,0.4);border-style:solid;}
+.corner.tl{top:14px;left:14px;border-width:2px 0 0 2px;}.corner.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}.corner.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 22px 14px;border-bottom:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
+.back-btn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.18);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.7);font-size:18px;transition:all 0.2s;flex-shrink:0;}
+.back-btn:hover{background:rgba(0,200,255,0.13);border-color:rgba(0,200,255,0.45);}
+.top-info{flex:1;}
+.top-info h2{font-size:15px;font-weight:700;color:#e8f8ff;letter-spacing:0.06em;margin-bottom:2px;}
+.top-info p{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.38);letter-spacing:0.1em;}
+.rec-pill{display:flex;align-items:center;gap:6px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,80,80,0.25);border-radius:20px;padding:5px 13px;}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,80,80,0.9);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.rec-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,130,130,0.8);letter-spacing:0.1em;}
+.timer{font-family:'Share Tech Mono',monospace;font-size:14px;color:rgba(0,200,255,0.7);letter-spacing:0.1em;min-width:54px;text-align:right;}
+
+/* MAIN */
+.main{display:flex;flex:1;min-height:0;}
+
+/* CANVAS */
+.sim-area{flex:1;position:relative;background:#050a12;border-right:1px solid rgba(0,200,255,0.07);overflow:hidden;cursor:crosshair;}
+.sim-lbl{position:absolute;top:12px;left:14px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.28);letter-spacing:0.1em;z-index:2;pointer-events:none;}
+.hud{position:absolute;bottom:12px;right:14px;z-index:2;display:flex;flex-direction:column;align-items:flex-end;gap:3px;pointer-events:none;}
+.hud-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,200,255,0.42);letter-spacing:0.06em;}
+.hud-val span{color:rgba(0,220,255,0.8);}
+canvas{width:100%;height:100%;display:block;}
+
+/* SIDE */
+.side{width:220px;display:flex;flex-direction:column;flex-shrink:0;}
+.panel{padding:14px 16px 12px;border-bottom:1px solid rgba(0,200,255,0.07);}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.13em;margin-bottom:12px;}
+
+/* SLIDER */
+.srow{margin-bottom:13px;}
+.srow:last-child{margin-bottom:0;}
+.stop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;}
+.sname{font-size:12px;font-weight:600;color:#c0ddf0;}
+.sval{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,210,255,0.75);}
+.sdesc{font-size:10px;color:rgba(140,200,220,0.38);margin-bottom:6px;font-weight:300;line-height:1.4;}
+input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,255,0.75);}
+
+/* VIEW BTNS */
+.view-btns{display:flex;gap:6px;}
+.vbtn{flex:1;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.13);border-radius:6px;padding:7px 0;font-family:'Exo 2',sans-serif;font-size:10px;font-weight:600;color:rgba(140,210,230,0.5);cursor:pointer;letter-spacing:0.04em;transition:all 0.18s;text-align:center;}
+.vbtn:hover{background:rgba(0,200,255,0.11);border-color:rgba(0,200,255,0.35);color:#c0eeff;}
+.vbtn.active{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.5);color:#c0eeff;}
+
+/* MEAS */
+.meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.mcard{background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.1);border-radius:8px;padding:9px 11px;}
+.mlbl{font-size:9px;color:rgba(150,200,220,0.42);letter-spacing:0.04em;margin-bottom:3px;}
+.mnum{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:600;color:#a0dff5;}
+.munit{font-size:9px;color:rgba(0,200,255,0.35);margin-left:2px;}
+
+/* PROBE */
+.probe{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.1);border-radius:8px;padding:10px 12px;margin-top:10px;}
+.probe-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.1em;margin-bottom:7px;}
+.prow{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.pkey{font-size:10px;color:rgba(160,210,230,0.45);}
+.pval{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,210,255,0.75);}
+
+/* CONTROLS */
+.controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 16px;border-top:1px solid rgba(0,200,255,0.07);}
+.cbtn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.15);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.65);font-size:18px;transition:all 0.18s;}
+.cbtn:hover{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.4);color:#c0eeff;}
+.cbtn.main{width:46px;height:46px;font-size:20px;border-color:rgba(0,200,255,0.35);}
+.cbtn.active{background:rgba(0,200,255,0.16);border-color:rgba(0,200,255,0.55);color:#c0eeff;}
+
+/* STATUS */
+.statusbar{display:flex;align-items:center;gap:8px;padding:9px 22px;border-top:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
+.sdot{width:6px;height:6px;border-radius:50%;background:rgba(0,210,120,0.8);}
+.stxt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.09em;flex:1;}
+.prog-wrap{width:100px;height:3px;background:rgba(0,200,255,0.1);border-radius:2px;overflow:hidden;}
+.prog{height:100%;width:0%;background:rgba(0,200,255,0.55);border-radius:2px;transition:width 0.5s;}
+</style>
+
+<div class="vr">
+  <div class="grid-bg"></div><div class="glow-top"></div><div class="scan"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+
+  <div class="topbar">
+    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><i class="ti ti-arrow-left" aria-hidden="true"></i></button>
+    <div class="top-info">
+      <h2>Campo eléctrico — Cargas puntuales</h2>
+      <p>SIMULACIÓN ACTIVA · ELECTROMAGNETISMO · INTERMEDIO</p>
+    </div>
+    <div class="rec-pill"><div class="rec-dot"></div><span class="rec-txt">REC</span></div>
+    <div class="timer" id="timer">00:00</div>
+  </div>
+
+  <div class="main">
+    <div class="sim-area" id="simArea">
+      <div class="sim-lbl">VISTA DE CAMPO · ARRASTRA LAS CARGAS</div>
+      <div class="hud">
+        <div class="hud-val">K = <span>8.99×10⁹</span></div>
+        <div class="hud-val">|F| = <span id="hudF">—</span> mN</div>
+        <div class="hud-val">r = <span id="hudR">—</span> cm</div>
+      </div>
+      <canvas id="c"></canvas>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <div class="panel-title">CARGAS</div>
+        <div class="srow">
+          <div class="stop"><span class="sname" style="color:rgba(255,120,120,0.85);">Q₁ positiva</span><span class="sval" id="q1v">+2.0 μC</span></div>
+          <input type="range" min="1" max="50" value="20" id="q1s">
+        </div>
+        <div class="srow">
+          <div class="stop"><span class="sname" style="color:rgba(100,170,255,0.85);">Q₂ negativa</span><span class="sval" id="q2v">–2.0 μC</span></div>
+          <input type="range" min="1" max="50" value="20" id="q2s">
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">VISUALIZACIÓN</div>
+        <div class="view-btns">
+          <button class="vbtn active" onclick="setView(this,'lines')">LÍNEAS</button>
+          <button class="vbtn" onclick="setView(this,'vectors')">VECTORES</button>
+          <button class="vbtn" onclick="setView(this,'potencial')">POTENCIAL</button>
+        </div>
+      </div>
+
+      <div class="panel" style="flex:1;">
+        <div class="panel-title">MEDICIONES</div>
+        <div class="meas-grid">
+          <div class="mcard"><div class="mlbl">FUERZA F</div><div><span class="mnum" id="mF">—</span><span class="munit">mN</span></div></div>
+          <div class="mcard"><div class="mlbl">DISTANCIA</div><div><span class="mnum" id="mR">—</span><span class="munit">cm</span></div></div>
+          <div class="mcard"><div class="mlbl">|E| MÁX</div><div><span class="mnum" id="mE">—</span><span class="munit">kN/C</span></div></div>
+          <div class="mcard"><div class="mlbl">ENERGÍA U</div><div><span class="mnum" id="mU">—</span><span class="munit">mJ</span></div></div>
+        </div>
+        <div class="probe">
+          <div class="probe-title">SONDA · CURSOR</div>
+          <div class="prow"><span class="pkey">Ex</span><span class="pval" id="pEx">mueve cursor</span></div>
+          <div class="prow"><span class="pkey">Ey</span><span class="pval" id="pEy">—</span></div>
+          <div class="prow"><span class="pkey">|E|</span><span class="pval" id="pE">—</span></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="cbtn" title="Reiniciar" onclick="reset()"><i class="ti ti-refresh" aria-hidden="true"></i></button>
+        <button class="cbtn main active" id="playBtn" title="Pausar" onclick="togglePlay()"><i class="ti ti-player-pause" aria-hidden="true"></i></button>
+        <button class="cbtn" title="Captura" onclick="snap(this)"><i class="ti ti-camera" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="sdot"></div>
+    <div class="stxt" id="stxt">SIMULACIÓN EN CURSO · CAMPO CALCULADO EN TIEMPO REAL</div>
+    <div class="prog-wrap"><div class="prog" id="prog"></div></div>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const simArea = document.getElementById('simArea');
+let running = true, viewMode = 'lines', timerSec = 0, frame = 0;
+let mx = -9999, my = -9999, dragging = null;
+
+const K = 8.99e9;
+const charges = [
+  {x:0,y:0,q:2,sign:1},
+  {x:0,y:0,q:2,sign:-1},
+];
+
+function W(){ return canvas.width; }
+function H(){ return canvas.height; }
+
+function resize(){
+  const r = simArea.getBoundingClientRect();
+  canvas.width = Math.max(r.width,10);
+  canvas.height = Math.max(r.height,10);
+  charges[0].x = W()*0.35; charges[0].y = H()*0.5;
+  charges[1].x = W()*0.65; charges[1].y = H()*0.5;
+}
+resize();
+
+function getQ(i){ return charges[i].q * charges[i].sign * 1e-6; }
+
+function fieldAt(px,py){
+  let ex=0,ey=0;
+  for(let i=0;i<2;i++){
+    const dx=px-charges[i].x, dy=py-charges[i].y;
+    const r2=dx*dx+dy*dy;
+    if(r2<100) continue;
+    const r=Math.sqrt(r2);
+    const mag=K*Math.abs(getQ(i))/r2;
+    const s=getQ(i)>0?1:-1;
+    ex+=s*mag*dx/r; ey+=s*mag*dy/r;
+  }
+  return {ex,ey,mag:Math.sqrt(ex*ex+ey*ey)};
+}
+
+document.getElementById('q1s').addEventListener('input',function(){
+  charges[0].q=this.value/10;
+  document.getElementById('q1v').textContent='+'+charges[0].q.toFixed(1)+' μC';
+});
+document.getElementById('q2s').addEventListener('input',function(){
+  charges[1].q=this.value/10;
+  document.getElementById('q2v').textContent='–'+charges[1].q.toFixed(1)+' μC';
+});
+
+function setView(btn,mode){
+  document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); viewMode=mode;
+}
+
+function getPos(e){
+  const r=canvas.getBoundingClientRect();
+  const sx=canvas.width/r.width, sy=canvas.height/r.height;
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  return {x:(cx-r.left)*sx,y:(cy-r.top)*sy};
+}
+canvas.addEventListener('mousedown',e=>{
+  const p=getPos(e);
+  for(let i=0;i<2;i++){
+    const dx=p.x-charges[i].x,dy=p.y-charges[i].y;
+    if(Math.sqrt(dx*dx+dy*dy)<22){dragging=i;break;}
+  }
+});
+canvas.addEventListener('mousemove',e=>{
+  const p=getPos(e); mx=p.x; my=p.y;
+  if(dragging!==null){charges[dragging].x=p.x;charges[dragging].y=p.y;}
+  const f=fieldAt(p.x,p.y);
+  const s=1e-5;
+  document.getElementById('pEx').textContent=(f.ex*s).toFixed(2)+' kN/C';
+  document.getElementById('pEy').textContent=(f.ey*s).toFixed(2)+' kN/C';
+  document.getElementById('pE').textContent=(f.mag*s).toFixed(2)+' kN/C';
+});
+canvas.addEventListener('mouseup',()=>dragging=null);
+canvas.addEventListener('mouseleave',()=>{dragging=null;mx=-9999;});
+
+function drawLines(){
+  const nL=16;
+  for(let ci=0;ci<2;ci++){
+    if(getQ(ci)<=0) continue;
+    for(let li=0;li<nL;li++){
+      const a=(li/nL)*Math.PI*2;
+      let px=charges[ci].x+Math.cos(a)*16, py=charges[ci].y+Math.sin(a)*16;
+      ctx.beginPath(); ctx.moveTo(px,py);
+      for(let s=0;s<300;s++){
+        const f=fieldAt(px,py); if(f.mag<1) break;
+        const ds=3/Math.log10(Math.max(f.mag,2)+1);
+        px+=f.ex/f.mag*ds; py+=f.ey/f.mag*ds;
+        if(px<0||px>W()||py<0||py>H()) break;
+        let hit=false;
+        for(let j=0;j<2;j++){const dx=px-charges[j].x,dy=py-charges[j].y;if(Math.sqrt(dx*dx+dy*dy)<14){hit=true;break;}}
+        if(hit) break;
+        ctx.lineTo(px,py);
+      }
+      ctx.strokeStyle='rgba(0,200,255,0.45)';ctx.lineWidth=0.9;ctx.stroke();
+    }
+  }
+}
+
+function drawVectors(){
+  const step=36;
+  for(let x=step/2;x<W();x+=step){
+    for(let y=step/2;y<H();y+=step){
+      const f=fieldAt(x,y); if(f.mag<1) continue;
+      const lm=Math.log10(f.mag+1);
+      const len=Math.min(lm*3.5,step*0.44);
+      const nx=f.ex/f.mag,ny=f.ey/f.mag;
+      const ex2=x+nx*len,ey2=y+ny*len;
+      const t=Math.min(lm/6,1);
+      const r=Math.round(50+t*150),g=Math.round(180-t*60),b=255;
+      ctx.strokeStyle=`rgba(${r},${g},${b},0.6)`;ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex2,ey2);ctx.stroke();
+      ctx.fillStyle=`rgba(${r},${g},${b},0.65)`;
+      ctx.beginPath();
+      ctx.moveTo(ex2,ey2);
+      ctx.lineTo(ex2-ny*3-nx*4,ey2+nx*3-ny*4);
+      ctx.lineTo(ex2+ny*3-nx*4,ey2-nx*3-ny*4);
+      ctx.closePath();ctx.fill();
+    }
+  }
+}
+
+function drawPotential(){
+  const w=W(),h=H();
+  const id=ctx.createImageData(w,h);
+  for(let y=0;y<h;y+=2){
+    for(let x=0;x<w;x+=2){
+      let V=0;
+      for(let i=0;i<2;i++){
+        const dx=x-charges[i].x,dy=y-charges[i].y;
+        const r=Math.sqrt(dx*dx+dy*dy);
+        if(r<4) continue;
+        V+=K*getQ(i)/r;
+      }
+      const n=Math.tanh(V/5e6);
+      let r,g,b;
+      if(n>0){r=Math.round(n*180);g=Math.round(n*40);b=20;}
+      else{r=20;g=Math.round(-n*60);b=Math.round(-n*200);}
+      for(let dy2=0;dy2<2&&y+dy2<h;dy2++){
+        for(let dx2=0;dx2<2&&x+dx2<w;dx2++){
+          const i2=((y+dy2)*w+(x+dx2))*4;
+          id.data[i2]=r;id.data[i2+1]=g;id.data[i2+2]=b;id.data[i2+3]=200;
+        }
+      }
+    }
+  }
+  ctx.putImageData(id,0,0);
+}
+
+function drawCharges(){
+  const cols=[['rgba(255,100,100,','rgba(255,130,130,'],['rgba(80,150,255,','rgba(100,170,255,']];
+  for(let i=0;i<2;i++){
+    const c=charges[i]; const cl=cols[i];
+    const g=ctx.createRadialGradient(c.x,c.y,4,c.x,c.y,28);
+    g.addColorStop(0,cl[0]+'0.3)');g.addColorStop(1,cl[0]+'0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(c.x,c.y,28,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(c.x,c.y,14,0,Math.PI*2);
+    ctx.fillStyle=cl[0]+'0.15)';ctx.fill();
+    ctx.strokeStyle=cl[1]+'0.8)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle=cl[1]+'0.95)';
+    ctx.font='bold 13px Share Tech Mono,monospace';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(c.sign>0?'+':'–',c.x,c.y);
+    ctx.font='9px Share Tech Mono,monospace';
+    ctx.fillStyle='rgba(180,220,240,0.4)';
+    ctx.fillText(i===0?'Q₁':'Q₂',c.x,c.y+22);
+  }
+}
+
+function updateMeas(){
+  const dx=charges[0].x-charges[1].x,dy=charges[0].y-charges[1].y;
+  const r=Math.sqrt(dx*dx+dy*dy)*0.002;
+  const q1=Math.abs(getQ(0)),q2=Math.abs(getQ(1));
+  const F=K*q1*q2/(r*r);
+  const U=K*getQ(0)*getQ(1)/r;
+  const Emax=K*q1/(0.015*0.015);
+  document.getElementById('mF').textContent=(F*1000).toFixed(1);
+  document.getElementById('mR').textContent=(r*100).toFixed(1);
+  document.getElementById('mE').textContent=(Emax/1000).toFixed(1);
+  document.getElementById('mU').textContent=(Math.abs(U)*1000).toFixed(2);
+  document.getElementById('hudF').textContent=(F*1000).toFixed(1);
+  document.getElementById('hudR').textContent=(r*100).toFixed(1);
+}
+
+function draw(){
+  ctx.clearRect(0,0,W(),H());
+  ctx.fillStyle='#050a12';ctx.fillRect(0,0,W(),H());
+  ctx.strokeStyle='rgba(0,200,255,0.04)';ctx.lineWidth=0.5;
+  for(let x=0;x<W();x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H());ctx.stroke();}
+  for(let y=0;y<H();y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W(),y);ctx.stroke();}
+  if(viewMode==='potencial') drawPotential();
+  if(viewMode==='lines') drawLines();
+  if(viewMode==='vectors') drawVectors();
+  drawCharges();
+  if(mx>0&&mx<W()){
+    ctx.strokeStyle='rgba(0,200,255,0.18)';ctx.lineWidth=0.5;ctx.setLineDash([3,5]);
+    ctx.beginPath();ctx.moveTo(mx,0);ctx.lineTo(mx,H());ctx.stroke();
+    ctx.beginPath();ctx.moveTo(0,my);ctx.lineTo(W(),my);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  if(running) updateMeas();
+  frame++;
+}
+
+function loop(){ if(running||frame===0) draw(); requestAnimationFrame(loop); }
+
+setInterval(()=>{
+  if(!running) return;
+  timerSec++;
+  const m=String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s=String(timerSec%60).padStart(2,'0');
+  document.getElementById('timer').textContent=m+':'+s;
+  const p=Math.min(100,timerSec/20*100);
+  document.getElementById('prog').style.width=p+'%';
+  if(p>=100) document.getElementById('stxt').textContent='DATOS SUFICIENTES · EXPERIMENTO COMPLETADO';
+},1000);
+
+function togglePlay(){
+  running=!running;
+  const btn=document.getElementById('playBtn');
+  btn.innerHTML=running?'<i class="ti ti-player-pause" aria-hidden="true"></i>':'<i class="ti ti-player-play" aria-hidden="true"></i>';
+  document.getElementById('stxt').textContent=running?'SIMULACIÓN EN CURSO · CAMPO CALCULADO EN TIEMPO REAL':'SIMULACIÓN EN PAUSA';
+  running?btn.classList.add('active'):btn.classList.remove('active');
+}
+function reset(){
+  timerSec=0;frame=0;
+  document.getElementById('timer').textContent='00:00';
+  document.getElementById('prog').style.width='0%';
+  document.getElementById('stxt').textContent='SIMULACIÓN EN CURSO · CAMPO CALCULADO EN TIEMPO REAL';
+  resize();
+  if(!running){running=true;document.getElementById('playBtn').innerHTML='<i class="ti ti-player-pause" aria-hidden="true"></i>';document.getElementById('playBtn').classList.add('active');}
+}
+function snap(btn){
+  btn.classList.add('active');
+  document.getElementById('stxt').textContent='CAPTURA GUARDADA · FRAME '+frame;
+  setTimeout(()=>btn.classList.remove('active'),600);
+}
+
+window.addEventListener('resize',resize);
+loop();
+</script>

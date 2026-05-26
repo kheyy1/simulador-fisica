@@ -1,0 +1,448 @@
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+.vr{background:#05080f;border-radius:16px;min-height:680px;display:flex;flex-direction:column;font-family:'Exo 2',sans-serif;position:relative;overflow:hidden;}
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
+.glow-top{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:400px;height:260px;background:radial-gradient(ellipse,rgba(0,180,255,0.07) 0%,transparent 70%);pointer-events:none;}
+.scan{position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,rgba(0,220,255,0.45),transparent);animation:scan 5s linear infinite;}
+@keyframes scan{0%{top:0;opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+.corner{position:absolute;width:18px;height:18px;border-color:rgba(0,200,255,0.4);border-style:solid;}
+.corner.tl{top:14px;left:14px;border-width:2px 0 0 2px;}.corner.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}.corner.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 22px 14px;border-bottom:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
+.back-btn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.18);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.7);font-size:18px;transition:all 0.2s;flex-shrink:0;}
+.back-btn:hover{background:rgba(0,200,255,0.13);border-color:rgba(0,200,255,0.45);}
+.top-info{flex:1;}.top-info h2{font-size:15px;font-weight:700;color:#e8f8ff;letter-spacing:0.06em;margin-bottom:2px;}
+.top-info p{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.38);letter-spacing:0.1em;}
+.rec-pill{display:flex;align-items:center;gap:6px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,80,80,0.25);border-radius:20px;padding:5px 13px;}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,80,80,0.9);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.rec-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,130,130,0.8);letter-spacing:0.1em;}
+.timer-disp{font-family:'Share Tech Mono',monospace;font-size:14px;color:rgba(0,200,255,0.7);min-width:54px;text-align:right;}
+.main{display:flex;flex:1;min-height:0;}
+.sim-area{flex:1;position:relative;background:#050a12;border-right:1px solid rgba(0,200,255,0.07);overflow:hidden;}
+.sim-lbl{position:absolute;top:12px;left:14px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.28);letter-spacing:0.1em;z-index:2;pointer-events:none;}
+.law-badge{position:absolute;top:12px;right:14px;font-family:'Share Tech Mono',monospace;font-size:9px;padding:4px 10px;border-radius:6px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.18);color:rgba(0,200,255,0.55);z-index:2;letter-spacing:0.07em;}
+canvas{width:100%;height:100%;display:block;}
+.side{width:222px;display:flex;flex-direction:column;flex-shrink:0;}
+.panel{padding:13px 16px 11px;border-bottom:1px solid rgba(0,200,255,0.07);}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.13em;margin-bottom:11px;}
+.srow{margin-bottom:12px;}.srow:last-child{margin-bottom:0;}
+.stop{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+.sname{font-size:12px;font-weight:600;color:#c0ddf0;}
+.sval{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,210,255,0.8);}
+.sdesc{font-size:10px;color:rgba(140,200,220,0.38);margin-bottom:5px;font-weight:300;}
+input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,255,0.75);}
+.law-btns{display:flex;gap:5px;margin-bottom:2px;}
+.lbtn{flex:1;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.13);border-radius:5px;padding:6px 0;font-family:'Exo 2',sans-serif;font-size:10px;font-weight:600;color:rgba(140,210,230,0.5);cursor:pointer;transition:all 0.18s;text-align:center;}
+.lbtn:hover{background:rgba(0,200,255,0.11);border-color:rgba(0,200,255,0.35);color:#c0eeff;}
+.lbtn.active{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.5);color:#c0eeff;}
+.meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.mcard{background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.1);border-radius:8px;padding:9px 11px;transition:border-color 0.3s,background 0.3s;}
+.mcard.hot{border-color:rgba(255,120,60,0.45);background:rgba(255,100,40,0.07);}
+.mcard.hot .mnum{color:rgba(255,160,80,0.95);}
+.mlbl{font-size:9px;color:rgba(150,200,220,0.42);letter-spacing:0.04em;margin-bottom:3px;}
+.mnum{font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:600;color:#a0dff5;transition:color 0.3s;}
+.munit{font-size:9px;color:rgba(0,200,255,0.35);margin-left:2px;}
+.law-box{background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.1);border-radius:8px;padding:10px 12px;margin-top:9px;}
+.law-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.1em;margin-bottom:6px;}
+.law-formula{font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(0,220,255,0.75);text-align:center;padding:6px 0;letter-spacing:0.05em;}
+.law-check{font-size:10px;color:rgba(0,200,120,0.7);text-align:center;margin-top:3px;font-family:'Share Tech Mono',monospace;}
+.controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 16px;border-top:1px solid rgba(0,200,255,0.07);}
+.cbtn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.15);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.65);font-size:18px;transition:all 0.18s;}
+.cbtn:hover{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.4);color:#c0eeff;}
+.cbtn.main{width:46px;height:46px;font-size:20px;border-color:rgba(0,200,255,0.35);}
+.cbtn.lit{background:rgba(0,200,255,0.16);border-color:rgba(0,200,255,0.55);color:#c0eeff;}
+.statusbar{display:flex;align-items:center;gap:8px;padding:9px 22px;border-top:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
+.sdot{width:6px;height:6px;border-radius:50%;background:rgba(0,210,120,0.8);}
+.stxt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.09em;flex:1;}
+.prog-wrap{width:100px;height:3px;background:rgba(0,200,255,0.1);border-radius:2px;overflow:hidden;}
+.prog{height:100%;width:0%;background:rgba(0,200,255,0.55);border-radius:2px;transition:width 0.4s;}
+</style>
+
+<div class="vr">
+  <div class="grid-bg"></div><div class="glow-top"></div><div class="scan"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+
+  <div class="topbar">
+    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><i class="ti ti-arrow-left"></i></button>
+    <div class="top-info">
+      <h2>Gas ideal — Leyes termodinámicas</h2>
+      <p>SIMULACIÓN ACTIVA · TERMODINÁMICA · BÁSICO</p>
+    </div>
+    <div class="rec-pill"><div class="rec-dot"></div><span class="rec-txt">REC</span></div>
+    <div class="timer-disp" id="timerDisp">00:00</div>
+  </div>
+
+  <div class="main">
+    <div class="sim-area" id="simArea">
+      <div class="sim-lbl">CONTENEDOR MOLECULAR · VISTA MICROSCÓPICA</div>
+      <div class="law-badge" id="lawBadge">PV = nRT</div>
+      <canvas id="c"></canvas>
+    </div>
+
+    <div class="side">
+      <!-- LEY -->
+      <div class="panel">
+        <div class="panel-title">LEY A DEMOSTRAR</div>
+        <div class="law-btns">
+          <button class="lbtn active" onclick="setLaw(this,'boyle')">BOYLE</button>
+          <button class="lbtn" onclick="setLaw(this,'charles')">CHARLES</button>
+          <button class="lbtn" onclick="setLaw(this,'gay')">GAY-LUSSAC</button>
+        </div>
+      </div>
+
+      <!-- VARIABLES -->
+      <div class="panel">
+        <div class="panel-title">VARIABLES</div>
+
+        <div class="srow" id="rowT">
+          <div class="stop"><span class="sname">Temperatura T</span><span class="sval" id="tVal">300 K</span></div>
+          <div class="sdesc">Energía cinética promedio de las moléculas</div>
+          <input type="range" min="0" max="800" value="300" id="tSlider">
+        </div>
+
+        <div class="srow" id="rowV">
+          <div class="stop"><span class="sname">Volumen V</span><span class="sval" id="vVal">1.00 L</span></div>
+          <div class="sdesc">Tamaño del contenedor virtual</div>
+          <input type="range" min="20" max="100" value="60" id="vSlider">
+        </div>
+
+        <div class="srow">
+          <div class="stop"><span class="sname">Cantidad n</span><span class="sval" id="nVal">1.0 mol</span></div>
+          <div class="sdesc">Número de moles de gas</div>
+          <input type="range" min="5" max="30" value="10" id="nSlider">
+        </div>
+      </div>
+
+      <!-- MEDICIONES -->
+      <div class="panel" style="flex:1;">
+        <div class="panel-title">MEDICIONES</div>
+        <div class="meas-grid">
+          <div class="mcard" id="cP"><div class="mlbl">PRESIÓN P</div><div><span class="mnum" id="mP">—</span><span class="munit">kPa</span></div></div>
+          <div class="mcard" id="cT"><div class="mlbl">TEMPERATURA T</div><div><span class="mnum" id="mT">300</span><span class="munit">K</span></div></div>
+          <div class="mcard" id="cV"><div class="mlbl">VOLUMEN V</div><div><span class="mnum" id="mV">1.00</span><span class="munit">L</span></div></div>
+          <div class="mcard"><div class="mlbl">MOLES n</div><div><span class="mnum" id="mN">1.0</span><span class="munit">mol</span></div></div>
+        </div>
+
+        <div class="law-box">
+          <div class="law-title">VERIFICACIÓN DE LA LEY</div>
+          <div class="law-formula" id="lawFormula">P·V = n·R·T</div>
+          <div class="law-check" id="lawCheck">— ajusta los sliders —</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="cbtn" title="Reiniciar" onclick="doReset()"><i class="ti ti-refresh"></i></button>
+        <button class="cbtn main lit" id="playBtn" onclick="togglePlay()"><i class="ti ti-player-pause"></i></button>
+        <button class="cbtn" title="Captura" onclick="snap(this)"><i class="ti ti-camera"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <div class="sdot"></div>
+    <div class="stxt" id="stxt">SIMULACIÓN EN CURSO · MOLÉCULAS EN MOVIMIENTO BROWNIANO</div>
+    <div class="prog-wrap"><div class="prog" id="prog"></div></div>
+  </div>
+</div>
+
+<script>
+const canvas  = document.getElementById('c');
+const ctx     = canvas.getContext('2d');
+const simArea = document.getElementById('simArea');
+const R_GAS   = 8.314; // J/(mol·K)
+
+let running  = true;
+let law      = 'boyle';
+let timerSec = 0;
+let prevTs   = null;
+let particles = [];
+
+// ── sliders ──────────────────────────────────────────────────
+const tSlider = document.getElementById('tSlider');
+const vSlider = document.getElementById('vSlider');
+const nSlider = document.getElementById('nSlider');
+
+function getT(){ return parseFloat(tSlider.value); }
+function getVraw(){ return parseFloat(vSlider.value); } // 20–100 maps to 0.2–1.8 L
+function getVliters(){ return getVraw()/55; }            // ≈ 0.36–1.82 L
+function getN(){ return parseFloat(nSlider.value)/10; }  // 0.5–3.0 mol
+
+tSlider.addEventListener('input', ()=>{
+  const T = parseInt(tSlider.value);
+  document.getElementById('tVal').textContent = T+' K';
+  if(T === 0){
+    document.getElementById('stxt').textContent = 'CERO ABSOLUTO · MOVIMIENTO MOLECULAR DETENIDO';
+  } else if(running){
+    document.getElementById('stxt').textContent = 'SIMULACIÓN EN CURSO · MOLÉCULAS EN MOVIMIENTO BROWNIANO';
+  }
+  updateMeas();
+});
+vSlider.addEventListener('input', ()=>{ document.getElementById('vVal').textContent = getVliters().toFixed(2)+' L'; rebuildParticles(); updateMeas(); });
+nSlider.addEventListener('input', ()=>{ document.getElementById('nVal').textContent = getN().toFixed(1)+' mol'; rebuildParticles(); updateMeas(); });
+
+// ── container geometry (inside canvas) ───────────────────────
+function containerRect(){
+  const W = canvas.width, H = canvas.height;
+  const vFrac = getVraw()/100;           // 0.2 – 1.0
+  const cw = Math.round(W*0.30 + W*0.50*vFrac);
+  const ch = Math.round(H*0.25 + H*0.50*vFrac);
+  const cx = (W - cw)/2;
+  const cy = (H - ch)/2 + H*0.04;
+  return {x:cx, y:cy, w:cw, h:ch};
+}
+
+// ── particles ────────────────────────────────────────────────
+function speedFromT(T){ return T <= 0 ? 0 : Math.sqrt(T/300)*2.8; } // 0 K = sin movimiento
+
+function rebuildParticles(){
+  const rect = containerRect();
+  const count = Math.round(getN()*10 + 8); // 8–38 particles
+  particles = [];
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const spd   = speedFromT(getT()) * (0.5 + Math.random());
+    particles.push({
+      x: rect.x + 10 + Math.random()*(rect.w-20),
+      y: rect.y + 10 + Math.random()*(rect.h-20),
+      vx: Math.cos(angle)*spd,
+      vy: Math.sin(angle)*spd,
+      r: 4,
+    });
+  }
+}
+
+function resizeCanvas(){
+  const r = simArea.getBoundingClientRect();
+  canvas.width  = Math.max(r.width,  10);
+  canvas.height = Math.max(r.height, 10);
+  rebuildParticles();
+}
+
+// ── physics update ────────────────────────────────────────────
+function updateParticles(dt){
+  const T    = getT();
+  const rect = containerRect();
+  const targetSpd = speedFromT(T);
+
+  for(const p of particles){
+    // Cero absoluto: detener completamente las partículas
+    if(T <= 0){
+      p.vx = 0; p.vy = 0;
+      continue;
+    }
+
+    // nudge speed toward target (temperature effect)
+    const spd = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+    if(spd > 0.001){
+      const factor = 1 + (targetSpd - spd)*dt*1.5;
+      p.vx *= factor; p.vy *= factor;
+    } else if(targetSpd > 0){
+      // reactivar partícula estacionaria cuando sube la temperatura
+      const angle = Math.random()*Math.PI*2;
+      p.vx = Math.cos(angle)*targetSpd;
+      p.vy = Math.sin(angle)*targetSpd;
+    }
+
+    p.x += p.vx * dt * 60;
+    p.y += p.vy * dt * 60;
+
+    // wall collisions (elastic)
+    if(p.x - p.r < rect.x)        { p.x = rect.x + p.r;           p.vx =  Math.abs(p.vx); }
+    if(p.x + p.r > rect.x+rect.w) { p.x = rect.x+rect.w - p.r;   p.vx = -Math.abs(p.vx); }
+    if(p.y - p.r < rect.y)        { p.y = rect.y + p.r;           p.vy =  Math.abs(p.vy); }
+    if(p.y + p.r > rect.y+rect.h) { p.y = rect.y+rect.h - p.r;   p.vy = -Math.abs(p.vy); }
+  }
+}
+
+// ── measurements ─────────────────────────────────────────────
+function updateMeas(){
+  const T = getT(), V = getVliters(), n = getN();
+  const P = T > 0 ? (n * R_GAS * T) / (V * 0.001) : 0; // Pa → kPa /1000
+  const Pkpa = P / 1000;
+
+  document.getElementById('mP').textContent = T > 0 ? Pkpa.toFixed(1) : '0.0';
+  document.getElementById('mT').textContent = T;
+  document.getElementById('mV').textContent = V.toFixed(2);
+  document.getElementById('mN').textContent = n.toFixed(1);
+
+  // hot card effect
+  const hotT = T > 500;
+  document.getElementById('cT').classList.toggle('hot', hotT);
+  document.getElementById('cP').classList.toggle('hot', Pkpa > 3000);
+
+  // law verification
+  const PV   = Pkpa * V;
+  const nRT  = n * R_GAS * T * 0.001; // kPa·L
+
+  let formula, check;
+  if(law === 'boyle'){
+    formula = 'P · V = constante';
+    check   = T > 0 ? 'P·V = ' + PV.toFixed(2) + ' kPa·L' : '— T = 0 K: P = 0 —';
+  } else if(law === 'charles'){
+    formula = 'V / T = constante';
+    check   = T > 0 ? 'V/T = ' + (V/T*1000).toFixed(3) + ' L/K' : '— T = 0 K: cero absoluto —';
+  } else {
+    formula = 'P / T = constante';
+    check   = T > 0 ? 'P/T = ' + (Pkpa/T).toFixed(2) + ' kPa/K' : '— T = 0 K: P = 0 —';
+  }
+  document.getElementById('lawFormula').textContent = formula;
+  document.getElementById('lawCheck').textContent   = check;
+}
+
+// ── rendering ────────────────────────────────────────────────
+function draw(ts){
+  if(!prevTs) prevTs = ts;
+  const dt = Math.min((ts - prevTs)/1000, 0.05);
+  prevTs = ts;
+
+  if(running) updateParticles(dt);
+
+  const W = canvas.width, H = canvas.height;
+  const rect = containerRect();
+  const T = getT();
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#050a12';
+  ctx.fillRect(0,0,W,H);
+
+  // grid
+  ctx.strokeStyle='rgba(0,200,255,0.04)'; ctx.lineWidth=0.5;
+  for(let x=0;x<W;x+=44){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=0;y<H;y+=44){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  // temperature color (0 K = azul puro, 800 K = rojo)
+  const tNorm  = T / 800;
+  const colR   = Math.round(tNorm*255);
+  const colG   = Math.round(180 - tNorm*120);
+  const colB   = Math.round(255 - tNorm*255);
+
+  // container glow
+  const grd = ctx.createRadialGradient(rect.x+rect.w/2, rect.y+rect.h/2, 10,
+                                        rect.x+rect.w/2, rect.y+rect.h/2, rect.w*0.7);
+  grd.addColorStop(0, `rgba(${colR},${colG},${colB},0.06)`);
+  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0,0,W,H);
+
+  // container fill
+  ctx.fillStyle = `rgba(${colR},${colG},${colB},0.04)`;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+
+  // container border
+  ctx.strokeStyle = `rgba(${colR},${colG},${colB},0.55)`;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+
+  // piston handle (right wall, draggable visual)
+  ctx.fillStyle = `rgba(${colR},${colG},${colB},0.18)`;
+  ctx.fillRect(rect.x+rect.w-6, rect.y+rect.h*0.3, 8, rect.h*0.4);
+  ctx.strokeStyle = `rgba(${colR},${colG},${colB},0.5)`;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(rect.x+rect.w-6, rect.y+rect.h*0.3, 8, rect.h*0.4);
+
+  // dimension labels
+  ctx.fillStyle = 'rgba(0,200,255,0.3)'; ctx.font='9px Share Tech Mono,monospace';
+  ctx.textAlign='center';
+  ctx.fillText('V = '+getVliters().toFixed(2)+' L', rect.x+rect.w/2, rect.y+rect.h+18);
+  ctx.save(); ctx.translate(rect.x-14, rect.y+rect.h/2); ctx.rotate(-Math.PI/2);
+  const labelP = getT() > 0 ? (((getN()*R_GAS*getT())/(getVliters()*0.001))/1000).toFixed(0)+' kPa' : '0 kPa';
+  ctx.fillText('P = '+labelP, 0, 0);
+  ctx.restore();
+
+  // particles
+  for(const p of particles){
+    const spd  = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
+    const maxSpd = speedFromT(800)*1.5;
+    const sNorm = maxSpd > 0 ? Math.min(spd / maxSpd, 1) : 0;
+    const pr = Math.round(sNorm*200 + 55);
+    const pg = Math.round((1-sNorm)*180 + 20);
+    const pb = Math.round((1-sNorm)*255);
+
+    const pg2 = ctx.createRadialGradient(p.x-1,p.y-1,0.5, p.x,p.y, p.r*1.8);
+    pg2.addColorStop(0, `rgba(${pr},${pg},${pb},0.9)`);
+    pg2.addColorStop(1, `rgba(${pr},${pg},${pb},0)`);
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r*1.8, 0, Math.PI*2);
+    ctx.fillStyle = pg2; ctx.fill();
+
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(${pr},${pg},${pb},0.85)`;
+    ctx.fill();
+  }
+
+  // thermometer visual (right side)
+  const thermX = rect.x + rect.w + 34;
+  const thermH = rect.h * 0.85;
+  const thermY = rect.y + rect.h*0.075;
+  ctx.strokeStyle = 'rgba(0,200,255,0.2)'; ctx.lineWidth=1;
+  ctx.strokeRect(thermX-5, thermY, 10, thermH);
+  const fillH = thermH * (T/800);
+  const tg = ctx.createLinearGradient(0, thermY+thermH, 0, thermY+thermH-fillH);
+  tg.addColorStop(0,`rgba(0,180,255,0.7)`);
+  tg.addColorStop(1,`rgba(255,80,40,0.7)`);
+  ctx.fillStyle = tg;
+  ctx.fillRect(thermX-4, thermY+thermH-fillH, 8, fillH);
+  ctx.fillStyle='rgba(0,200,255,0.3)'; ctx.font='8px Share Tech Mono,monospace';
+  ctx.textAlign='center';
+  ctx.fillText(T+'K', thermX, thermY-8);
+  ctx.fillText('0K', thermX, thermY+thermH+12);
+
+  if(running) updateMeas();
+  requestAnimationFrame(draw);
+}
+
+// ── law selector ─────────────────────────────────────────────
+function setLaw(btn, l){
+  document.querySelectorAll('.lbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); law = l;
+  const badges = {boyle:'P·V = cte  (T fija)', charles:'V/T = cte  (P fija)', gay:'P/T = cte  (V fijo)'};
+  document.getElementById('lawBadge').textContent = badges[l];
+  // lock/unlock sliders
+  tSlider.disabled = (l==='boyle');
+  vSlider.disabled = (l==='gay');
+  tSlider.style.opacity = (l==='boyle') ? '0.3' : '1';
+  vSlider.style.opacity = (l==='gay')   ? '0.3' : '1';
+  updateMeas();
+}
+
+function doReset(){
+  tSlider.value = 300; document.getElementById('tVal').textContent = '300 K';
+  vSlider.value = 60;  document.getElementById('vVal').textContent = (60/55).toFixed(2)+' L';
+  nSlider.value = 10;  document.getElementById('nVal').textContent = '1.0 mol';
+  tSlider.disabled = false; vSlider.disabled = false;
+  tSlider.style.opacity='1'; vSlider.style.opacity='1';
+  rebuildParticles(); updateMeas();
+}
+
+function togglePlay(){
+  running=!running;
+  const btn=document.getElementById('playBtn');
+  btn.innerHTML=running?'<i class="ti ti-player-pause"></i>':'<i class="ti ti-player-play"></i>';
+  running?btn.classList.add('lit'):btn.classList.remove('lit');
+  document.getElementById('stxt').textContent=running?'SIMULACIÓN EN CURSO · MOLÉCULAS EN MOVIMIENTO BROWNIANO':'SIMULACIÓN EN PAUSA';
+  if(running) prevTs=null;
+}
+
+function snap(btn){
+  btn.classList.add('lit');
+  document.getElementById('stxt').textContent='CAPTURA GUARDADA';
+  setTimeout(()=>btn.classList.remove('lit'),600);
+}
+
+setInterval(()=>{
+  if(!running) return;
+  timerSec++;
+  const m=String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s=String(timerSec%60).padStart(2,'0');
+  document.getElementById('timerDisp').textContent=m+':'+s;
+  document.getElementById('prog').style.width=Math.min(100,timerSec/18*100)+'%';
+},1000);
+
+resizeCanvas();
+updateMeas();
+requestAnimationFrame(draw);
+window.addEventListener('resize',()=>{resizeCanvas();prevTs=null;});
+</script>

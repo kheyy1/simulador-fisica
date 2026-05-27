@@ -1,4 +1,3 @@
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -73,7 +72,7 @@ input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,2
   <div class="corner bl"></div><div class="corner br"></div>
 
   <div class="topbar">
-    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><i class="ti ti-arrow-left"></i></button>
+    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="top-info">
       <h2>Colisiones — Conservación de momento</h2>
       <p>SIMULACIÓN ACTIVA · MECÁNICA · INTERMEDIO</p>
@@ -147,8 +146,8 @@ input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,2
 
       <div class="controls" style="flex-direction:column;gap:8px;padding:12px 16px;">
         <div style="display:flex;gap:8px;width:100%;">
-          <button class="cbtn main lit" id="playBtn" onclick="togglePlay()" style="flex-shrink:0;"><i class="ti ti-player-pause"></i></button>
-          <button class="reset-big" onclick="doReset()"><i class="ti ti-refresh" style="font-size:16px;"></i> Nueva práctica</button>
+          <button class="cbtn main lit" id="playBtn" onclick="togglePlay()" style="flex-shrink:0;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
+          <button class="reset-big" onclick="doReset()"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg> Nueva práctica</button>
         </div>
       </div>
     </div>
@@ -416,8 +415,8 @@ function loop(ts){
 function updatePlayBtn(){
   const btn = document.getElementById('playBtn');
   btn.innerHTML = running
-    ? '<i class="ti ti-player-pause"></i>'
-    : '<i class="ti ti-player-play"></i>';
+    ? '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+    : '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
   running ? btn.classList.add('lit') : btn.classList.remove('lit');
 }
 
@@ -457,4 +456,3 @@ document.getElementById('mpBefore').textContent = (mA*vA0 + mB*vB0).toFixed(2);
 requestAnimationFrame(loop);
 window.addEventListener('resize', ()=>{ resizeCanvas(); initPositions(); prevTs=null; });
 </script>
-

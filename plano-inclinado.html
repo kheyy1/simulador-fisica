@@ -1,6 +1,6 @@
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css');
 *{box-sizing:border-box;margin:0;padding:0;}
 .vr{background:#05080f;border-radius:16px;min-height:680px;display:flex;flex-direction:column;font-family:'Exo 2',sans-serif;position:relative;overflow:hidden;}
 .grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.04) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;}
@@ -68,6 +68,7 @@ input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,2
 .cbtn:hover{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.4);color:#c0eeff;}
 .cbtn.main{width:46px;height:46px;font-size:20px;border-color:rgba(0,200,255,0.35);}
 .cbtn.lit{background:rgba(0,200,255,0.16);border-color:rgba(0,200,255,0.55);color:#c0eeff;}
+.cbtn svg, .back-btn svg { pointer-events: none; }
 
 .statusbar{display:flex;align-items:center;gap:8px;padding:9px 22px;border-top:1px solid rgba(0,200,255,0.07);position:relative;z-index:1;}
 .sdot{width:6px;height:6px;border-radius:50%;background:rgba(0,210,120,0.8);}
@@ -82,7 +83,7 @@ input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,2
   <div class="corner bl"></div><div class="corner br"></div>
 
   <div class="topbar">
-    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><i class="ti ti-arrow-left"></i></button>
+    <button class="back-btn" onclick="sendPrompt('Volver a la selección de experimentos con estilo azul mejorado')" aria-label="Volver"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div class="top-info">
       <h2>Plano inclinado — Dinámica</h2>
       <p>SIMULACIÓN ACTIVA · MECÁNICA · BÁSICO</p>
@@ -155,15 +156,22 @@ input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,2
       </div>
 
       <div class="controls">
-        <button class="cbtn" title="Reiniciar" onclick="resetSim()"><i class="ti ti-refresh"></i></button>
-        <button class="cbtn main lit" id="playBtn" onclick="togglePlay()"><i class="ti ti-player-pause"></i></button>
-        <button class="cbtn" title="Captura" onclick="snap(this)"><i class="ti ti-camera"></i></button>
+        <button class="cbtn" title="Reiniciar" onclick="resetSim()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <button class="cbtn main lit" id="playBtn" onclick="togglePlay()">
+          <svg id="iconPause" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <svg id="iconPlay" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="cbtn" title="Captura" onclick="snap(this)">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </button>
       </div>
     </div>
   </div>
 
   <div class="statusbar">
-    <div class="sdot"></div>
+    <div class="sdot" id="sdot"></div>
     <div class="stxt" id="stxt">SIMULACIÓN EN CURSO · FÍSICA CALCULADA EN TIEMPO REAL</div>
     <div class="prog-wrap"><div class="prog" id="prog"></div></div>
   </div>
@@ -180,6 +188,7 @@ let blockPos = 0; // position along incline (meters)
 let blockVel = 0;
 let trail = [];
 let lastTs = null;
+let finished = false; // true cuando el bloque llega al final del plano
 
 function W(){ return canvas.width; }
 function H(){ return canvas.height; }
@@ -208,7 +217,7 @@ function resize(){
   canvas.width = Math.max(r.width, 10);
   canvas.height = Math.max(r.height, 10);
   trail = [];
-  blockPos = 0; blockVel = 0; simTime = 0;
+  blockPos = 0; blockVel = 0; simTime = 0; finished = false;
 }
 resize();
 
@@ -216,7 +225,8 @@ resize();
 document.getElementById('angleSlider').addEventListener('input', function(){
   document.getElementById('angleVal').textContent = this.value + '°';
   document.getElementById('hudTheta').textContent = parseFloat(this.value).toFixed(1);
-  trail = []; blockPos = 0; blockVel = 0; simTime = 0;
+  trail = []; blockPos = 0; blockVel = 0; simTime = 0; finished = false;
+  document.getElementById('sdot').style.background='rgba(0,210,120,0.8)';
 });
 document.getElementById('massSlider').addEventListener('input', function(){
   document.getElementById('massVal').textContent = parseFloat(this.value).toFixed(1) + ' kg';
@@ -231,14 +241,23 @@ function draw(ts){
   lastTs = ts;
 
   const ph = getPhysics();
+  const maxDist = 5.5; // meters
 
-  if(running){
+  if(running && !finished){
     simTime += dt;
     // Only move if net force pushes down
     if(ph.a > 0 || blockVel > 0){
       blockVel += ph.a * dt;
       if(blockVel < 0) blockVel = 0;
       blockPos += blockVel * dt;
+    }
+    // Detectar llegada al final
+    if(blockPos >= maxDist){
+      blockPos = maxDist;
+      blockVel = 0;
+      finished = true;
+      document.getElementById('stxt').textContent = 'BLOQUE AL FINAL DEL PLANO · t=' + simTime.toFixed(2) + 's · REINICIA PARA REPETIR';
+      document.getElementById('sdot').style.background = 'rgba(255,160,40,0.9)';
     }
   }
 
@@ -255,7 +274,6 @@ function draw(ts){
   const ppm = inclineLen / 6;
 
   // block position in pixels along incline (from top)
-  const maxDist = 5.5; // meters
   const normPos = Math.min(blockPos, maxDist) / maxDist;
   const bpx = topX - normPos * (topX - baseX);
   const bpy = topY + normPos * (baseY - topY);
@@ -409,7 +427,7 @@ function draw(ts){
   }
 
   // update HUD & measurements
-  const aDisplay = ph.a > 0 ? ph.a.toFixed(2) : '0.00';
+  const aDisplay = (!finished && ph.a > 0) ? ph.a.toFixed(2) : '0.00';
   document.getElementById('hudA').textContent = aDisplay;
   document.getElementById('hudV').textContent = blockVel.toFixed(2);
   document.getElementById('mA').textContent = aDisplay;
@@ -419,11 +437,7 @@ function draw(ts){
   document.getElementById('fW').textContent = ph.W.toFixed(1)+' N';
   document.getElementById('fN').textContent = ph.N.toFixed(1)+' N';
   document.getElementById('fF').textContent = ph.fric.toFixed(1)+' N';
-  document.getElementById('fNet').textContent = (ph.Fnet>0?'+':'')+ph.Fnet.toFixed(1)+' N';
-
-  if(blockPos >= maxDist && running){
-    document.getElementById('stxt').textContent = 'BLOQUE AL FINAL DEL PLANO · REINICIA PARA REPETIR';
-  }
+  document.getElementById('fNet').textContent = (!finished ? (ph.Fnet>0?'+':'')+ph.Fnet.toFixed(1) : '0.0')+' N';
 
   requestAnimationFrame(draw);
 }
@@ -431,7 +445,7 @@ requestAnimationFrame(draw);
 
 // Wall timer
 setInterval(()=>{
-  if(!running) return;
+  if(!running || finished) return;
   timerSec++;
   const m=String(Math.floor(timerSec/60)).padStart(2,'0');
   const s=String(timerSec%60).padStart(2,'0');
@@ -443,19 +457,26 @@ setInterval(()=>{
 
 function togglePlay(){
   running=!running;
+  document.getElementById('iconPause').style.display = running ? '' : 'none';
+  document.getElementById('iconPlay').style.display  = running ? 'none' : '';
   const btn=document.getElementById('playBtn');
-  btn.innerHTML=running?'<i class="ti ti-player-pause"></i>':'<i class="ti ti-player-play"></i>';
   running?btn.classList.add('lit'):btn.classList.remove('lit');
   document.getElementById('stxt').textContent=running?'SIMULACIÓN EN CURSO · FÍSICA CALCULADA EN TIEMPO REAL':'SIMULACIÓN EN PAUSA';
   if(running) lastTs = null;
 }
 function resetSim(){
   blockPos=0; blockVel=0; simTime=0; trail=[];
-  timerSec=0; lastTs=null;
+  timerSec=0; lastTs=null; finished=false;
   document.getElementById('timer').textContent='00:00';
   document.getElementById('prog').style.width='0%';
   document.getElementById('stxt').textContent='SIMULACIÓN EN CURSO · FÍSICA CALCULADA EN TIEMPO REAL';
-  if(!running){ running=true; document.getElementById('playBtn').innerHTML='<i class="ti ti-player-pause"></i>'; document.getElementById('playBtn').classList.add('lit'); }
+  document.getElementById('sdot').style.background='rgba(0,210,120,0.8)';
+  if(!running){
+    running=true;
+    document.getElementById('iconPause').style.display='';
+    document.getElementById('iconPlay').style.display='none';
+    document.getElementById('playBtn').classList.add('lit');
+  }
 }
 function snap(btn){
   btn.classList.add('lit');

@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campo Eléctrico 3D — PhysLab VR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600;700&family=Share+Tech+Mono&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:#05080f;overflow:hidden;}
+
+.vr{background:#05080f;width:100%;height:100vh;display:flex;flex-direction:column;font-family:'Exo 2',sans-serif;position:relative;overflow:hidden;}
+.grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,200,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,200,255,0.03) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+.scan{position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,rgba(0,220,255,0.4),transparent);animation:scan 5s linear infinite;z-index:1;}
+@keyframes scan{0%{top:0;opacity:1}95%{opacity:1}100%{top:100%;opacity:0}}
+.corner{position:absolute;width:18px;height:18px;border-color:rgba(0,200,255,0.4);border-style:solid;z-index:3;}
+.corner.tl{top:14px;left:14px;border-width:2px 0 0 2px;}.corner.tr{top:14px;right:14px;border-width:2px 2px 0 0;}
+.corner.bl{bottom:14px;left:14px;border-width:0 0 2px 2px;}.corner.br{bottom:14px;right:14px;border-width:0 2px 2px 0;}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 20px 12px;border-bottom:1px solid rgba(0,200,255,0.08);position:relative;z-index:10;flex-shrink:0;}
+.back-btn{background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.2);border-radius:8px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(0,200,255,0.8);font-size:18px;font-weight:700;transition:all 0.2s;flex-shrink:0;text-decoration:none;}
+.back-btn:hover{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.5);}
+.top-info{flex:1;}
+.top-info h2{font-size:15px;font-weight:700;color:#e8f8ff;letter-spacing:0.06em;margin-bottom:2px;}
+.top-info p{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.4);letter-spacing:0.1em;}
+.rec-pill{display:flex;align-items:center;gap:6px;background:rgba(255,60,60,0.1);border:1px solid rgba(255,80,80,0.25);border-radius:20px;padding:5px 12px;}
+.rec-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,80,80,0.9);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+.rec-txt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(255,130,130,0.8);letter-spacing:0.1em;}
+.timer{font-family:'Share Tech Mono',monospace;font-size:14px;color:rgba(0,200,255,0.7);min-width:54px;text-align:right;}
+
+/* MAIN LAYOUT */
+.main{display:flex;flex:1;min-height:0;position:relative;z-index:2;}
+
+/* 3D VIEWPORT */
+.viewport{flex:1;position:relative;overflow:hidden;cursor:grab;}
+.viewport:active{cursor:grabbing;}
+#threeCanvas{display:block;width:100%;height:100%;}
+.vp-label{position:absolute;top:12px;left:14px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.3);letter-spacing:0.1em;pointer-events:none;}
+.vp-hint{position:absolute;bottom:14px;left:14px;font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.2);letter-spacing:0.07em;pointer-events:none;}
+.emf-badge{position:absolute;top:12px;right:14px;font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 11px;border-radius:6px;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.2);color:rgba(0,200,255,0.6);letter-spacing:0.07em;transition:all 0.3s;}
+
+/* SIDE PANEL */
+.side{width:220px;display:flex;flex-direction:column;flex-shrink:0;border-left:1px solid rgba(0,200,255,0.07);}
+.panel{padding:13px 16px 11px;border-bottom:1px solid rgba(0,200,255,0.07);}
+.panel-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.13em;margin-bottom:11px;}
+
+.charge-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.charge-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;font-family:'Share Tech Mono',monospace;}
+.cpos{background:rgba(255,80,80,0.12);border:1px solid rgba(255,100,100,0.4);color:rgba(255,140,140,0.95);}
+.cneg{background:rgba(80,150,255,0.12);border:1px solid rgba(80,160,255,0.4);color:rgba(120,180,255,0.95);}
+.charge-info{flex:1;}
+.charge-name{font-size:10px;color:rgba(180,220,240,0.7);display:block;margin-bottom:2px;}
+.charge-q{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,210,255,0.75);}
+input[type=range]{width:100%;height:3px;cursor:pointer;accent-color:rgba(0,180,255,0.75);margin-top:3px;}
+
+.add-btn{width:100%;margin-top:4px;background:rgba(0,200,255,0.04);border:1px dashed rgba(0,200,255,0.18);border-radius:5px;padding:6px;font-size:10px;color:rgba(0,200,255,0.45);cursor:pointer;font-family:'Exo 2',sans-serif;letter-spacing:0.05em;transition:all 0.18s;}
+.add-btn:hover{background:rgba(0,200,255,0.09);border-color:rgba(0,200,255,0.4);color:rgba(0,200,255,0.8);}
+
+.view-btns{display:flex;gap:5px;}
+.vbtn{flex:1;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.13);border-radius:5px;padding:6px 0;font-family:'Exo 2',sans-serif;font-size:9px;font-weight:600;color:rgba(140,210,230,0.5);cursor:pointer;letter-spacing:0.03em;transition:all 0.18s;text-align:center;}
+.vbtn:hover{background:rgba(0,200,255,0.11);border-color:rgba(0,200,255,0.35);color:#c0eeff;}
+.vbtn.active{background:rgba(0,200,255,0.14);border-color:rgba(0,200,255,0.52);color:#c0eeff;}
+
+.meas-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.mcard{background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.1);border-radius:7px;padding:8px 10px;}
+.mlbl{font-size:9px;color:rgba(150,200,220,0.42);letter-spacing:0.04em;margin-bottom:2px;}
+.mnum{font-family:'Share Tech Mono',monospace;font-size:13px;font-weight:600;color:#a0dff5;}
+.munit{font-size:9px;color:rgba(0,200,255,0.35);margin-left:1px;}
+
+.probe-box{background:rgba(0,200,255,0.03);border:1px solid rgba(0,200,255,0.1);border-radius:7px;padding:9px 11px;margin-top:8px;}
+.probe-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.33);letter-spacing:0.1em;margin-bottom:6px;}
+.prow{display:flex;justify-content:space-between;margin-bottom:4px;}.prow:last-child{margin-bottom:0;}
+.pkey{font-size:10px;color:rgba(160,210,230,0.45);}
+.pval{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,210,255,0.75);}
+
+/* CONTROLS */
+.controls{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 14px;border-top:1px solid rgba(0,200,255,0.07);}
+.cbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:rgba(0,200,255,0.06);border:1px solid rgba(0,200,255,0.2);border-radius:9px;width:50px;height:50px;cursor:pointer;color:rgba(0,200,255,0.7);transition:all 0.18s;}
+.cbtn:hover{background:rgba(0,200,255,0.13);border-color:rgba(0,200,255,0.45);color:#c0eeff;}
+.cbtn.main{width:58px;height:58px;border-color:rgba(0,200,255,0.38);}
+.cbtn.lit{background:rgba(0,200,255,0.15);border-color:rgba(0,200,255,0.58);color:#c0eeff;}
+.cbtn svg{width:20px;height:20px;flex-shrink:0;}
+.cbtn.main svg{width:24px;height:24px;}
+.cbtn-lbl{font-size:7.5px;font-weight:600;letter-spacing:0.05em;opacity:0.75;font-family:'Exo 2',sans-serif;}
+
+/* STATUS */
+.statusbar{display:flex;align-items:center;gap:8px;padding:8px 20px;border-top:1px solid rgba(0,200,255,0.07);position:relative;z-index:10;flex-shrink:0;}
+.sdot{width:6px;height:6px;border-radius:50%;background:rgba(0,210,120,0.8);}
+.stxt{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,200,255,0.35);letter-spacing:0.09em;flex:1;}
+.prog-wrap{width:100px;height:3px;background:rgba(0,200,255,0.1);border-radius:2px;overflow:hidden;}
+.prog{height:100%;width:0%;background:rgba(0,200,255,0.55);border-radius:2px;transition:width 0.5s;}
+</style>
+</head>
+<body>
+<div class="vr">
+  <div class="grid-bg"></div><div class="scan"></div>
+  <div class="corner tl"></div><div class="corner tr"></div>
+  <div class="corner bl"></div><div class="corner br"></div>
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <button class="back-btn" title="Volver">&#8592;</button>
+    <div class="top-info">
+      <h2>Campo eléctrico 3D — Cargas puntuales</h2>
+      <p>SIMULACIÓN 3D ACTIVA · ELECTROMAGNETISMO · ARRASTRA PARA ROTAR</p>
+    </div>
+    <div class="rec-pill"><div class="rec-dot"></div><span class="rec-txt">REC</span></div>
+    <div class="timer" id="timerDisp">00:00</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- 3D VIEWPORT -->
+    <div class="viewport" id="viewport">
+      <div class="vp-label">VISTA 3D · ROTA · ZOOM · PANEO</div>
+      <div class="vp-hint">ARRASTRAR = rotar · SCROLL = zoom · CLIC DERECHO = paneo</div>
+      <div class="emf-badge" id="fBadge">|F| = — mN</div>
+      <canvas id="threeCanvas"></canvas>
+    </div>
+
+    <!-- SIDE PANEL -->
+    <div class="side">
+      <!-- CARGAS -->
+      <div class="panel">
+        <div class="panel-title">CARGAS</div>
+        <div class="charge-row">
+          <div class="charge-icon cpos">+</div>
+          <div class="charge-info">
+            <span class="charge-name">Q₁ positiva</span>
+            <span class="charge-q" id="q1Label">+2.0 μC</span>
+            <input type="range" min="1" max="50" value="20" id="q1Slider">
+          </div>
+        </div>
+        <div class="charge-row">
+          <div class="charge-icon cneg">–</div>
+          <div class="charge-info">
+            <span class="charge-name">Q₂ negativa</span>
+            <span class="charge-q" id="q2Label">–2.0 μC</span>
+            <input type="range" min="1" max="50" value="20" id="q2Slider">
+          </div>
+        </div>
+        <div class="charge-row" id="q3Row" style="display:none;">
+          <div class="charge-icon cpos">+</div>
+          <div class="charge-info">
+            <span class="charge-name">Q₃ adicional</span>
+            <span class="charge-q" id="q3Label">+1.5 μC</span>
+            <input type="range" min="1" max="50" value="15" id="q3Slider">
+          </div>
+        </div>
+        <button class="add-btn" id="addBtn" onclick="toggleThird()">+ AGREGAR CARGA Q₃</button>
+      </div>
+
+      <!-- VISUALIZACIÓN -->
+      <div class="panel">
+        <div class="panel-title">VISUALIZACIÓN</div>
+        <div class="view-btns">
+          <button class="vbtn active" onclick="setView(this,'lines')">LÍNEAS</button>
+          <button class="vbtn" onclick="setView(this,'vectors')">VECTORES</button>
+          <button class="vbtn" onclick="setView(this,'equipot')">EQUIPOT.</button>
+        </div>
+      </div>
+
+      <!-- MEDICIONES -->
+      <div class="panel" style="flex:1;overflow-y:auto;">
+        <div class="panel-title">MEDICIONES</div>
+        <div class="meas-grid">
+          <div class="mcard"><div class="mlbl">FUERZA F</div><div><span class="mnum" id="mF">—</span><span class="munit">mN</span></div></div>
+          <div class="mcard"><div class="mlbl">DISTANCIA</div><div><span class="mnum" id="mR">—</span><span class="munit">cm</span></div></div>
+          <div class="mcard"><div class="mlbl">|E| MÁX</div><div><span class="mnum" id="mE">—</span><span class="munit">kN/C</span></div></div>
+          <div class="mcard"><div class="mlbl">ENERGÍA U</div><div><span class="mnum" id="mU">—</span><span class="munit">mJ</span></div></div>
+        </div>
+        <div class="probe-box">
+          <div class="probe-title">SONDA · PUNTO SELECCIONADO</div>
+          <div class="prow"><span class="pkey">Ex</span><span class="pval" id="pEx">clic en escena</span></div>
+          <div class="prow"><span class="pkey">Ey</span><span class="pval" id="pEy">—</span></div>
+          <div class="prow"><span class="pkey">Ez</span><span class="pval" id="pEz">—</span></div>
+          <div class="prow"><span class="pkey">|E|</span><span class="pval" id="pEtot">—</span></div>
+        </div>
+      </div>
+
+      <!-- CONTROLES -->
+      <div class="controls">
+        <button class="cbtn" onclick="doReset()" title="Reiniciar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          <span class="cbtn-lbl">REINICIAR</span>
+        </button>
+        <button class="cbtn main lit" id="playBtn" onclick="togglePlay()">
+          <svg id="playIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          <span class="cbtn-lbl" id="playLbl">PAUSAR</span>
+        </button>
+        <button class="cbtn" onclick="doSnap(this)" title="Captura">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          <span class="cbtn-lbl">CAPTURA</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="statusbar">
+    <div class="sdot"></div>
+    <div class="stxt" id="stxt">SIMULACIÓN 3D EN CURSO · CAMPO CALCULADO EN TIEMPO REAL</div>
+    <div class="prog-wrap"><div class="prog" id="prog"></div></div>
+  </div>
+</div>
+
+<!-- Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── Constants ──────────────────────────────────────────────
+const K = 8.99e9;
+let running = true, viewMode = 'lines', thirdCharge = false, timerSec = 0;
+let animId = null;
+
+// ── Charges data ───────────────────────────────────────────
+const chargesData = [
+  { pos: new THREE.Vector3(-2, 0, 0), q: 2e-6,  sign: +1 },
+  { pos: new THREE.Vector3( 2, 0, 0), q: 2e-6,  sign: -1 },
+  { pos: new THREE.Vector3( 0, 0, 2), q: 1.5e-6,sign: +1 },
+];
+
+// ── Three.js setup ─────────────────────────────────────────
+const viewport = document.getElementById('viewport');
+const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('threeCanvas'), antialias: true, alpha: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setClearColor(0x050a12, 1);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 200);
+camera.position.set(6, 5, 8);
+camera.lookAt(0, 0, 0);
+
+// ── Orbit controls (manual, no import needed) ──────────────
+let isDown = false, isRight = false;
+let lastX = 0, lastY = 0;
+let theta = Math.PI / 5, phi = Math.PI / 3.5, radius = 11;
+const target = new THREE.Vector3(0, 0, 0);
+
+function updateCamera() {
+  camera.position.set(
+    target.x + radius * Math.sin(phi) * Math.cos(theta),
+    target.y + radius * Math.cos(phi),
+    target.z + radius * Math.sin(phi) * Math.sin(theta)
+  );
+  camera.lookAt(target);
+}
+updateCamera();
+
+viewport.addEventListener('mousedown', e => {
+  isDown = true; isRight = e.button === 2;
+  lastX = e.clientX; lastY = e.clientY;
+  e.preventDefault();
+});
+viewport.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('mouseup', () => isDown = false);
+window.addEventListener('mousemove', e => {
+  if (!isDown) return;
+  const dx = e.clientX - lastX, dy = e.clientY - lastY;
+  lastX = e.clientX; lastY = e.clientY;
+  if (!isRight) {
+    theta -= dx * 0.008;
+    phi = Math.max(0.1, Math.min(Math.PI - 0.1, phi + dy * 0.008));
+  } else {
+    const right = new THREE.Vector3().crossVectors(camera.getWorldDirection(new THREE.Vector3()), camera.up).normalize();
+    const up = camera.up.clone();
+    target.addScaledVector(right, -dx * 0.01);
+    target.addScaledVector(up, dy * 0.01);
+  }
+  updateCamera();
+});
+viewport.addEventListener('wheel', e => {
+  radius = Math.max(3, Math.min(30, radius + e.deltaY * 0.02));
+  updateCamera();
+});
+
+// ── Resize ─────────────────────────────────────────────────
+function resizeRenderer() {
+  const w = viewport.clientWidth, h = viewport.clientHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resizeRenderer();
+window.addEventListener('resize', resizeRenderer);
+
+// ── Lighting ───────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0x112233, 2));
+const pLight = new THREE.PointLight(0x00c8ff, 1.5, 30);
+pLight.position.set(0, 6, 0);
+scene.add(pLight);
+
+// ── Grid floor ─────────────────────────────────────────────
+const gridHelper = new THREE.GridHelper(16, 16, 0x0a2030, 0x061520);
+gridHelper.position.y = -3;
+scene.add(gridHelper);
+
+// ── Axes ───────────────────────────────────────────────────
+const axisMat = (color) => new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.25 });
+function makeAxis(dir, color) {
+  const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,0,0), dir.multiplyScalar(5)]);
+  return new THREE.Line(g, axisMat(color));
+}
+scene.add(makeAxis(new THREE.Vector3(1,0,0), 0xff3333));
+scene.add(makeAxis(new THREE.Vector3(0,1,0), 0x33ff66));
+scene.add(makeAxis(new THREE.Vector3(0,0,1), 0x3399ff));
+
+// ── Field computation ──────────────────────────────────────
+function fieldAt3D(px, py, pz) {
+  let ex = 0, ey = 0, ez = 0;
+  const n = thirdCharge ? 3 : 2;
+  for (let i = 0; i < n; i++) {
+    const dx = px - chargesData[i].pos.x;
+    const dy = py - chargesData[i].pos.y;
+    const dz = pz - chargesData[i].pos.z;
+    const r2 = dx*dx + dy*dy + dz*dz;
+    if (r2 < 0.01) continue;
+    const r = Math.sqrt(r2);
+    const mag = K * Math.abs(chargesData[i].q) / r2;
+    const s = chargesData[i].sign;
+    ex += s * mag * dx / r;
+    ey += s * mag * dy / r;
+    ez += s * mag * dz / r;
+  }
+  return { ex, ey, ez, mag: Math.sqrt(ex*ex + ey*ey + ez*ez) };
+}
+
+// ── Charge spheres ─────────────────────────────────────────
+const chargeMeshes = [];
+function buildCharges() {
+  chargeMeshes.forEach(m => scene.remove(m));
+  chargeMeshes.length = 0;
+  const n = thirdCharge ? 3 : 2;
+  const colors = [0xff4444, 0x4488ff, 0xff8800];
+  for (let i = 0; i < n; i++) {
+    const q = chargesData[i].q;
+    const r = Math.max(0.18, Math.sqrt(q * 1e6) * 0.12);
+    const geo = new THREE.SphereGeometry(r, 32, 32);
+    const mat = new THREE.MeshPhongMaterial({
+      color: colors[i],
+      emissive: colors[i],
+      emissiveIntensity: 0.6,
+      transparent: true, opacity: 0.9,
+      shininess: 80
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(chargesData[i].pos);
+    scene.add(mesh);
+    chargeMeshes.push(mesh);
+
+    // glow halo
+    const haloGeo = new THREE.SphereGeometry(r * 2.5, 16, 16);
+    const haloMat = new THREE.MeshBasicMaterial({
+      color: colors[i], transparent: true, opacity: 0.08,
+      side: THREE.BackSide
+    });
+    const halo = new THREE.Mesh(haloGeo, haloMat);
+    halo.position.copy(chargesData[i].pos);
+    scene.add(halo);
+    chargeMeshes.push(halo);
+  }
+}
+buildCharges();
+
+// ── Field lines ────────────────────────────────────────────
+let fieldLineGroup = new THREE.Group();
+scene.add(fieldLineGroup);
+
+function buildFieldLines() {
+  while (fieldLineGroup.children.length) fieldLineGroup.remove(fieldLineGroup.children[0]);
+  const n = thirdCharge ? 3 : 2;
+  const numLines = 18;
+  const mat = new THREE.LineBasicMaterial({ color: 0x00c8ff, transparent: true, opacity: 0.55, linewidth: 1 });
+
+  for (let ci = 0; ci < n; ci++) {
+    if (chargesData[ci].sign <= 0) continue;
+    for (let li = 0; li < numLines; li++) {
+      const phi2 = Math.acos(1 - 2 * (li + 0.5) / numLines);
+      const theta2 = Math.PI * (1 + Math.sqrt(5)) * li;
+      const sx = Math.sin(phi2) * Math.cos(theta2);
+      const sy = Math.cos(phi2);
+      const sz = Math.sin(phi2) * Math.sin(theta2);
+      const startR = 0.35;
+      let px = chargesData[ci].pos.x + sx * startR;
+      let py = chargesData[ci].pos.y + sy * startR;
+      let pz = chargesData[ci].pos.z + sz * startR;
+
+      const pts = [new THREE.Vector3(px, py, pz)];
+      for (let step = 0; step < 300; step++) {
+        const f = fieldAt3D(px, py, pz);
+        if (f.mag < 0.5) break;
+        const ds = 0.06 / Math.log10(Math.max(f.mag * 1e-5, 2) + 1);
+        const nx = f.ex / f.mag, ny = f.ey / f.mag, nz = f.ez / f.mag;
+        px += nx * ds; py += ny * ds; pz += nz * ds;
+        if (Math.sqrt(px*px + py*py + pz*pz) > 9) break;
+        let hit = false;
+        for (let j = 0; j < n; j++) {
+          const d = new THREE.Vector3(px, py, pz).distanceTo(chargesData[j].pos);
+          if (d < 0.4) { hit = true; break; }
+        }
+        if (hit) break;
+        pts.push(new THREE.Vector3(px, py, pz));
+      }
+      if (pts.length < 2) continue;
+      const geo = new THREE.BufferGeometry().setFromPoints(pts);
+      const line = new THREE.Line(geo, mat);
+      fieldLineGroup.add(line);
+    }
+  }
+}
+
+// ── Vector arrows ──────────────────────────────────────────
+let vectorGroup = new THREE.Group();
+scene.add(vectorGroup);
+vectorGroup.visible = false;
+
+function buildVectors() {
+  while (vectorGroup.children.length) vectorGroup.remove(vectorGroup.children[0]);
+  const step = 1.2, range = 4;
+  for (let x = -range; x <= range; x += step) {
+    for (let y = -range; y <= range; y += step) {
+      for (let z = -range; z <= range; z += step) {
+        const f = fieldAt3D(x, y, z);
+        if (f.mag < 1e3) continue;
+        const logm = Math.log10(f.mag + 1);
+        const len = Math.min(logm * 0.1, 0.55);
+        const nx = f.ex/f.mag, ny = f.ey/f.mag, nz = f.ez/f.mag;
+        const t = Math.min(logm / 7, 1);
+        const col = new THREE.Color(0.2 + t*0.8, 0.7 - t*0.4, 1 - t*0.7);
+        const mat = new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.65 });
+        const pts = [
+          new THREE.Vector3(x, y, z),
+          new THREE.Vector3(x + nx*len, y + ny*len, z + nz*len)
+        ];
+        const geo = new THREE.BufferGeometry().setFromPoints(pts);
+        vectorGroup.add(new THREE.Line(geo, mat));
+        // cone tip
+        const coneGeo = new THREE.ConeGeometry(0.04, 0.1, 6);
+        const coneMat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.7 });
+        const cone = new THREE.Mesh(coneGeo, coneMat);
+        cone.position.set(x + nx*len, y + ny*len, z + nz*len);
+        cone.lookAt(x + nx*(len+1), y + ny*(len+1), z + nz*(len+1));
+        cone.rotateX(Math.PI/2);
+        vectorGroup.add(cone);
+      }
+    }
+  }
+}
+
+// ── Equipotential surfaces ─────────────────────────────────
+let equipotGroup = new THREE.Group();
+scene.add(equipotGroup);
+equipotGroup.visible = false;
+
+function buildEquipot() {
+  while (equipotGroup.children.length) equipotGroup.remove(equipotGroup.children[0]);
+  const levels = [5e6, 1.5e7, 3e7];
+  const colors = [0x00ffcc, 0xffcc00, 0xff4488];
+  const res = 30;
+  levels.forEach((Vt, li) => {
+    const mat = new THREE.MeshBasicMaterial({
+      color: colors[li], transparent: true,
+      opacity: 0.12, side: THREE.DoubleSide, wireframe: false
+    });
+    const wMat = new THREE.MeshBasicMaterial({
+      color: colors[li], transparent: true, opacity: 0.3, wireframe: true
+    });
+    // approximate sphere around Q1
+    for (let ci = 0; ci < (thirdCharge ? 3 : 2); ci++) {
+      const rEq = K * chargesData[ci].q / Vt;
+      if (rEq < 0.1 || rEq > 6) continue;
+      const geo = new THREE.SphereGeometry(rEq, res, res);
+      const mesh = new THREE.Mesh(geo, mat);
+      const wMesh = new THREE.Mesh(geo.clone(), wMat);
+      mesh.position.copy(chargesData[ci].pos);
+      wMesh.position.copy(chargesData[ci].pos);
+      equipotGroup.add(mesh);
+      equipotGroup.add(wMesh);
+    }
+  });
+}
+
+// ── Build all ──────────────────────────────────────────────
+function rebuildScene() {
+  buildCharges();
+  if (viewMode === 'lines')   buildFieldLines();
+  if (viewMode === 'vectors') buildVectors();
+  if (viewMode === 'equipot') buildEquipot();
+}
+rebuildScene();
+
+// ── Raycaster for probe ────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const planeMesh = new THREE.Mesh(
+  new THREE.PlaneGeometry(20, 20),
+  new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide })
+);
+planeMesh.rotation.x = -Math.PI / 2;
+scene.add(planeMesh);
+
+viewport.addEventListener('click', e => {
+  const rect = viewport.getBoundingClientRect();
+  const mouse = new THREE.Vector2(
+    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+    -((e.clientY - rect.top) / rect.height) * 2 + 1
+  );
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObject(planeMesh);
+  if (hits.length > 0) {
+    const p = hits[0].point;
+    const f = fieldAt3D(p.x, p.y, p.z);
+    const s = 1e-5;
+    document.getElementById('pEx').textContent = (f.ex*s).toFixed(2)+' kN/C';
+    document.getElementById('pEy').textContent = (f.ey*s).toFixed(2)+' kN/C';
+    document.getElementById('pEz').textContent = (f.ez*s).toFixed(2)+' kN/C';
+    document.getElementById('pEtot').textContent = (f.mag*s).toFixed(2)+' kN/C';
+    // show probe marker
+    probeMarker.position.copy(p);
+    probeMarker.visible = true;
+  }
+});
+
+// probe marker
+const probeGeo = new THREE.SphereGeometry(0.1, 8, 8);
+const probeMat = new THREE.MeshBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.9 });
+const probeMarker = new THREE.Mesh(probeGeo, probeMat);
+probeMarker.visible = false;
+scene.add(probeMarker);
+
+// ── Measurements ───────────────────────────────────────────
+function updateMeasurements() {
+  const dx = chargesData[0].pos.x - chargesData[1].pos.x;
+  const dy = chargesData[0].pos.y - chargesData[1].pos.y;
+  const dz = chargesData[0].pos.z - chargesData[1].pos.z;
+  const r = Math.sqrt(dx*dx+dy*dy+dz*dz) * 0.5; // rough scale
+  const rM = Math.max(r, 0.01);
+  const q1 = chargesData[0].q, q2 = chargesData[1].q;
+  const F = K * q1 * q2 / (rM * rM);
+  const U = K * chargesData[0].sign * q1 * chargesData[1].sign * q2 / rM;
+  const Emax = K * q1 / (0.015 * 0.015);
+  document.getElementById('mF').textContent = (F * 1000).toFixed(1);
+  document.getElementById('mR').textContent = (rM * 100).toFixed(1);
+  document.getElementById('mE').textContent = (Emax / 1000).toFixed(1);
+  document.getElementById('mU').textContent = (Math.abs(U) * 1000).toFixed(2);
+  document.getElementById('fBadge').textContent = '|F| = '+(F*1000).toFixed(1)+' mN';
+}
+
+// ── Animate ────────────────────────────────────────────────
+let rotAnim = 0;
+function animate() {
+  animId = requestAnimationFrame(animate);
+  if (running) {
+    rotAnim += 0.003;
+    // gently pulse the charge glows
+    chargeMeshes.forEach((m, i) => {
+      if (m.material && m.material.opacity < 0.2) {
+        m.material.opacity = 0.06 + 0.03 * Math.sin(rotAnim * 2 + i);
+      }
+    });
+    updateMeasurements();
+  }
+  renderer.render(scene, camera);
+}
+animate();
+
+// ── Sliders ────────────────────────────────────────────────
+document.getElementById('q1Slider').addEventListener('input', function() {
+  chargesData[0].q = this.value / 10 * 1e-6;
+  document.getElementById('q1Label').textContent = '+' + (this.value/10).toFixed(1) + ' μC';
+  rebuildScene();
+});
+document.getElementById('q2Slider').addEventListener('input', function() {
+  chargesData[1].q = this.value / 10 * 1e-6;
+  document.getElementById('q2Label').textContent = '–' + (this.value/10).toFixed(1) + ' μC';
+  rebuildScene();
+});
+document.getElementById('q3Slider').addEventListener('input', function() {
+  chargesData[2].q = this.value / 10 * 1e-6;
+  document.getElementById('q3Label').textContent = '+' + (this.value/10).toFixed(1) + ' μC';
+  rebuildScene();
+});
+
+// ── Third charge ───────────────────────────────────────────
+function toggleThird() {
+  thirdCharge = !thirdCharge;
+  document.getElementById('q3Row').style.display = thirdCharge ? 'flex' : 'none';
+  document.getElementById('addBtn').textContent = thirdCharge ? '– QUITAR CARGA Q₃' : '+ AGREGAR CARGA Q₃';
+  rebuildScene();
+}
+
+// ── View modes ─────────────────────────────────────────────
+function setView(btn, mode) {
+  document.querySelectorAll('.vbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  viewMode = mode;
+  fieldLineGroup.visible = mode === 'lines';
+  vectorGroup.visible    = mode === 'vectors';
+  equipotGroup.visible   = mode === 'equipot';
+  if (mode === 'lines'   && fieldLineGroup.children.length === 0) buildFieldLines();
+  if (mode === 'vectors' && vectorGroup.children.length === 0)    buildVectors();
+  if (mode === 'equipot' && equipotGroup.children.length === 0)   buildEquipot();
+}
+
+// ── Controls ───────────────────────────────────────────────
+function togglePlay() {
+  running = !running;
+  const icon = document.getElementById('playIcon');
+  const lbl  = document.getElementById('playLbl');
+  const btn  = document.getElementById('playBtn');
+  if (running) {
+    icon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    lbl.textContent = 'PAUSAR'; btn.classList.add('lit');
+    document.getElementById('stxt').textContent = 'SIMULACIÓN 3D EN CURSO · CAMPO CALCULADO EN TIEMPO REAL';
+  } else {
+    icon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+    lbl.textContent = 'PLAY'; btn.classList.remove('lit');
+    document.getElementById('stxt').textContent = 'SIMULACIÓN EN PAUSA';
+  }
+}
+
+function doReset() {
+  chargesData[0].pos.set(-2, 0, 0);
+  chargesData[1].pos.set( 2, 0, 0);
+  chargesData[2].pos.set( 0, 0, 2);
+  document.getElementById('q1Slider').value = 20;
+  document.getElementById('q2Slider').value = 20;
+  document.getElementById('q3Slider').value = 15;
+  document.getElementById('q1Label').textContent = '+2.0 μC';
+  document.getElementById('q2Label').textContent = '–2.0 μC';
+  document.getElementById('q3Label').textContent = '+1.5 μC';
+  timerSec = 0;
+  document.getElementById('timerDisp').textContent = '00:00';
+  document.getElementById('prog').style.width = '0%';
+  document.getElementById('stxt').textContent = 'SIMULACIÓN 3D EN CURSO · CAMPO CALCULADO EN TIEMPO REAL';
+  theta = Math.PI/5; phi = Math.PI/3.5; radius = 11;
+  updateCamera();
+  rebuildScene();
+  if (!running) {
+    running = true;
+    document.getElementById('playIcon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    document.getElementById('playLbl').textContent = 'PAUSAR';
+    document.getElementById('playBtn').classList.add('lit');
+  }
+}
+
+function doSnap(btn) {
+  btn.style.background = 'rgba(0,200,255,0.25)';
+  document.getElementById('stxt').textContent = 'CAPTURA GUARDADA';
+  setTimeout(() => btn.style.background = '', 500);
+}
+
+// ── Timer ──────────────────────────────────────────────────
+setInterval(() => {
+  if (!running) return;
+  timerSec++;
+  const m = String(Math.floor(timerSec/60)).padStart(2,'0');
+  const s = String(timerSec%60).padStart(2,'0');
+  document.getElementById('timerDisp').textContent = m+':'+s;
+  const p = Math.min(100, timerSec/20*100);
+  document.getElementById('prog').style.width = p+'%';
+  if (p >= 100) document.getElementById('stxt').textContent = 'DATOS SUFICIENTES · EXPERIMENTO COMPLETADO';
+}, 1000);
+</script>
+</body>
+</html>
